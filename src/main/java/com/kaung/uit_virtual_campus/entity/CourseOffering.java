@@ -22,7 +22,7 @@ import java.util.Objects;
 @Table(
         name = "course_offerings",
         schema = "public",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"semester_id", "section_id", "subject_id"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"semester_id", "academic_group_id", "subject_id"})
 )
 public class CourseOffering {
 
@@ -36,8 +36,8 @@ public class CourseOffering {
     private Semester semester;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "section_id", nullable = false)
-    private Section section;
+    @JoinColumn(name = "academic_group_id", nullable = false)
+    private AcademicGroup academicGroup;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "subject_id", nullable = false)
@@ -50,16 +50,16 @@ public class CourseOffering {
     protected CourseOffering() {
     }
 
-    public CourseOffering(Long offeringId, Semester semester, Section section, Subject subject) {
+    public CourseOffering(Long offeringId, Semester semester, AcademicGroup academicGroup, Subject subject) {
         this.offeringId = offeringId;
         this.semester = semester;
-        this.section = section;
+        this.academicGroup = academicGroup;
         this.subject = subject;
     }
 
-    public CourseOffering(Semester semester, Section section, Subject subject) {
+    public CourseOffering(Semester semester, AcademicGroup academicGroup, Subject subject) {
         this.semester = semester;
-        this.section = section;
+        this.academicGroup = academicGroup;
         this.subject = subject;
     }
 
@@ -71,8 +71,8 @@ public class CourseOffering {
         return semester;
     }
 
-    public Section getSection() {
-        return section;
+    public AcademicGroup getAcademicGroup() {
+        return academicGroup;
     }
 
     public Subject getSubject() {

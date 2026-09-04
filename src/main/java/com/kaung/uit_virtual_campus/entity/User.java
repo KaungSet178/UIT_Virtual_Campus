@@ -7,6 +7,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
@@ -32,10 +34,13 @@ public class User {
     @Column(name = "profile_image")
     private String profileImage;
 
-    @Column(name = "created_at")
+    @Column(name = "phone")
+    private String phone;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -77,6 +82,10 @@ public class User {
         return profileImage;
     }
 
+    public String getPhone() {
+        return phone;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -87,6 +96,32 @@ public class User {
 
     public Set<Role> getRoles() {
         return Set.copyOf(roles);
+    }
+
+    public void completeProfile(String fullName, String phone) {
+        this.fullName = fullName;
+        this.phone = phone;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PrePersist
+    void prePersist() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    public void addRole(Role role) {
+        this.roles.add(role);
     }
 
     @Override

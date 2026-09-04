@@ -68,15 +68,8 @@ public class RoomAvailabilityService {
             Long excludedReservationId
     ) {
         validateDateTime(date, startTime, endTime);
-        Short dayOfWeek = dayOfWeek(date);
-        long scheduleConflicts = scheduleRepository.countOfficialScheduleConflicts(
-                roomId,
-                dayOfWeek,
-                date,
-                startTime,
-                endTime
-        );
-        if (scheduleConflicts > 0) {
+        List<AvailabilityConflictResponse> scheduleConflicts = findOfficialScheduleConflicts(roomId, date, startTime, endTime);
+        if (!scheduleConflicts.isEmpty()) {
             throw new ConflictException("Room is occupied by an official schedule during the requested time.");
         }
 
@@ -138,7 +131,7 @@ public class RoomAvailabilityService {
                 schedule.getStartTime(),
                 schedule.getEndTime(),
                 "Official schedule: " + schedule.getCourseOffering().getSubject().getSubjectCode()
-                        + " for " + schedule.getCourseOffering().getSection().getSectionName()
+                        + " for " + schedule.getCourseOffering().getAcademicGroup().getDisplayName()
         );
     }
 

@@ -100,7 +100,9 @@ class ReservationControllerTest {
     @DisplayName("Non-admin cannot access admin reservations")
     void nonAdminCannotAccessAdminReservations() throws Exception {
         mockMvc.perform(get("/api/admin/reservations"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"));
     }
 
     @Test
@@ -139,6 +141,43 @@ class ReservationControllerTest {
                         .param("endTime", "10:00"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("Availability endpoint reports missing request parameters with common envelope")
+    void missingAvailabilityParameterReturns400() throws Exception {
+        mockMvc.perform(get("/api/rooms/10/availability")
+                        .param("date", "2026-08-24")
+                        .param("startTime", "09:00"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Missing required request parameter: endTime"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("Availability endpoint reports invalid date parameters with common envelope")
+    void invalidDateParameterReturns400() throws Exception {
+        mockMvc.perform(get("/api/rooms/10/availability")
+                        .param("date", "not-a-date")
+                        .param("startTime", "09:00")
+                        .param("endTime", "10:00"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Invalid value for request parameter: date"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("Malformed JSON request body returns safe common envelope")
+    void malformedJsonReturns400() throws Exception {
+        mockMvc.perform(post("/api/reservations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Malformed JSON request body"));
     }
 
     private ReservationResponse reservationResponse(Long reservationId) {

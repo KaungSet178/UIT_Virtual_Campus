@@ -3,6 +3,7 @@ package com.kaung.uit_virtual_campus.repository;
 import com.kaung.uit_virtual_campus.entity.Building;
 import com.kaung.uit_virtual_campus.entity.Floor;
 import com.kaung.uit_virtual_campus.entity.Reservation;
+import com.kaung.uit_virtual_campus.entity.ReservationStatus;
 import com.kaung.uit_virtual_campus.entity.Room;
 import com.kaung.uit_virtual_campus.entity.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -123,5 +125,100 @@ class ReservationRepositoryTest {
         assertThat(found).isPresent();
         assertThat(found.get().getUser().getEmail()).isEqualTo("user@example.com");
         assertThat(found.get().getRoom().getRoomNumber()).isEqualTo("111");
+    }
+
+    @Test
+    @DisplayName("Creating reservation populates audit timestamps")
+    void createPopulatesAuditTimestamps() {
+        Reservation reservation = reservationRepository.saveAndFlush(new Reservation(
+                user,
+                room,
+                LocalDate.of(2026, 9, 4),
+                LocalTime.of(14, 0),
+                LocalTime.of(15, 0),
+                "meeting"
+        ));
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.PENDING);
+        assertThat(reservation.getCreatedAt()).isNotNull();
+        assertThat(reservation.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Approving reservation refreshes updatedAt")
+    void approveRefreshesUpdatedAt() {
+        OffsetDateTime oldTimestamp = OffsetDateTime.parse("2026-01-01T00:00:00Z");
+        Reservation reservation = reservationRepository.saveAndFlush(new Reservation(
+                null,
+                user,
+                room,
+                LocalDate.of(2026, 9, 4),
+                LocalTime.of(14, 0),
+                LocalTime.of(15, 0),
+                "meeting",
+                ReservationStatus.PENDING,
+                null,
+                oldTimestamp,
+                oldTimestamp
+        ));
+
+        reservation.approve(user);
+        entityManager.flush();
+
+        assertThat(reservation.getCreatedAt()).isEqualTo(oldTimestamp);
+        assertThat(reservation.getUpdatedAt()).isAfter(oldTimestamp);
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("Rejecting reservation refreshes updatedAt")
+    void rejectRefreshesUpdatedAt() {
+        OffsetDateTime oldTimestamp = OffsetDateTime.parse("2026-01-01T00:00:00Z");
+        Reservation reservation = reservationRepository.saveAndFlush(new Reservation(
+                null,
+                user,
+                room,
+                LocalDate.of(2026, 9, 4),
+                LocalTime.of(14, 0),
+                LocalTime.of(15, 0),
+                "meeting",
+                ReservationStatus.PENDING,
+                null,
+                oldTimestamp,
+                oldTimestamp
+        ));
+
+        reservation.reject();
+        entityManager.flush();
+
+        assertThat(reservation.getCreatedAt()).isEqualTo(oldTimestamp);
+        assertThat(reservation.getUpdatedAt()).isAfter(oldTimestamp);
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.REJECTED);
+    }
+
+    @Test
+    @DisplayName("Cancelling reservation refreshes updatedAt")
+    void cancelRefreshesUpdatedAt() {
+        OffsetDateTime oldTimestamp = OffsetDateTime.parse("2026-01-01T00:00:00Z");
+        Reservation reservation = reservationRepository.saveAndFlush(new Reservation(
+                null,
+                user,
+                room,
+                LocalDate.of(2026, 9, 4),
+                LocalTime.of(14, 0),
+                LocalTime.of(15, 0),
+                "meeting",
+                ReservationStatus.PENDING,
+                null,
+                oldTimestamp,
+                oldTimestamp
+        ));
+
+        reservation.cancel();
+        entityManager.flush();
+
+        assertThat(reservation.getCreatedAt()).isEqualTo(oldTimestamp);
+        assertThat(reservation.getUpdatedAt()).isAfter(oldTimestamp);
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.CANCELLED);
     }
 }

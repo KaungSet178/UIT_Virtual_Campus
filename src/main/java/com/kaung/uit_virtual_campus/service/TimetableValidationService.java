@@ -28,12 +28,16 @@ public class TimetableValidationService {
     }
 
     public void validateNoRoomOverlap(Long roomId, Short dayOfWeek, LocalTime startTime,
-                                      LocalTime endTime, Long excludedScheduleId) {
-        long overlaps = scheduleRepository.countOverlappingSchedules(
+                                      LocalTime endTime, Long semesterId, Long subjectId,
+                                      Long academicGroupId, Long excludedScheduleId) {
+        long overlaps = scheduleRepository.countDisallowedRoomOverlaps(
                 roomId,
                 dayOfWeek,
                 startTime,
                 endTime,
+                semesterId,
+                subjectId,
+                academicGroupId,
                 excludedScheduleId
         );
         if (overlaps > 0) {

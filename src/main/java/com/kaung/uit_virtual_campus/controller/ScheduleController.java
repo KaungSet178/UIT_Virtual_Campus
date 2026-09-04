@@ -32,21 +32,27 @@ public class ScheduleController {
     @GetMapping("/timetable")
     public List<ScheduleResponse> getTimetable(
             @RequestParam(required = false) Long semesterId,
-            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) Long academicGroupId,
             @RequestParam(required = false) Long subjectId,
             @RequestParam(required = false) Long roomId
     ) {
-        return scheduleService.getTimetable(semesterId, sectionId, subjectId, roomId);
+        return scheduleService.getTimetable(semesterId, academicGroupId, subjectId, roomId);
+    }
+
+    @GetMapping("/timetable/me")
+    @PreAuthorize("hasAnyRole('STUDENT', 'CLUB_LEADER')")
+    public List<ScheduleResponse> getCurrentStudentTimetable() {
+        return scheduleService.getCurrentStudentTimetable();
     }
 
     @GetMapping("/schedules")
     public List<ScheduleResponse> listSchedules(
             @RequestParam(required = false) Long semesterId,
-            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) Long academicGroupId,
             @RequestParam(required = false) Long subjectId,
             @RequestParam(required = false) Long roomId
     ) {
-        return scheduleService.getTimetable(semesterId, sectionId, subjectId, roomId);
+        return scheduleService.getTimetable(semesterId, academicGroupId, subjectId, roomId);
     }
 
     @GetMapping("/schedules/{scheduleId}")

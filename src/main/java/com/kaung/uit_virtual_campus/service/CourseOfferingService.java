@@ -2,14 +2,14 @@ package com.kaung.uit_virtual_campus.service;
 
 import com.kaung.uit_virtual_campus.dto.CourseOfferingRequest;
 import com.kaung.uit_virtual_campus.dto.CourseOfferingResponse;
+import com.kaung.uit_virtual_campus.entity.AcademicGroup;
 import com.kaung.uit_virtual_campus.entity.CourseOffering;
-import com.kaung.uit_virtual_campus.entity.Section;
 import com.kaung.uit_virtual_campus.entity.Semester;
 import com.kaung.uit_virtual_campus.entity.Subject;
 import com.kaung.uit_virtual_campus.exception.ConflictException;
 import com.kaung.uit_virtual_campus.exception.ResourceNotFoundException;
+import com.kaung.uit_virtual_campus.repository.AcademicGroupRepository;
 import com.kaung.uit_virtual_campus.repository.CourseOfferingRepository;
-import com.kaung.uit_virtual_campus.repository.SectionRepository;
 import com.kaung.uit_virtual_campus.repository.SemesterRepository;
 import com.kaung.uit_virtual_campus.repository.SubjectRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -24,23 +24,26 @@ public class CourseOfferingService {
 
     private final CourseOfferingRepository courseOfferingRepository;
     private final SemesterRepository semesterRepository;
-    private final SectionRepository sectionRepository;
+    private final AcademicGroupRepository academicGroupRepository;
     private final SubjectRepository subjectRepository;
+    private final AcademicGroupService academicGroupService;
 
     public CourseOfferingService(
             CourseOfferingRepository courseOfferingRepository,
             SemesterRepository semesterRepository,
-            SectionRepository sectionRepository,
-            SubjectRepository subjectRepository
+            AcademicGroupRepository academicGroupRepository,
+            SubjectRepository subjectRepository,
+            AcademicGroupService academicGroupService
     ) {
         this.courseOfferingRepository = courseOfferingRepository;
         this.semesterRepository = semesterRepository;
-        this.sectionRepository = sectionRepository;
+        this.academicGroupRepository = academicGroupRepository;
         this.subjectRepository = subjectRepository;
+        this.academicGroupService = academicGroupService;
     }
 
-    public List<CourseOfferingResponse> getCourseOfferings(Long semesterId, Long sectionId, Long subjectId) {
-        return courseOfferingRepository.findAllWithFilters(semesterId, sectionId, subjectId).stream()
+    public List<CourseOfferingResponse> getCourseOfferings(Long semesterId, Long academicGroupId, Long subjectId) {
+        return courseOfferingRepository.findAllWithFilters(semesterId, academicGroupId, subjectId).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -55,21 +58,21 @@ public class CourseOfferingService {
     public CourseOfferingResponse createCourseOffering(CourseOfferingRequest request) {
         Semester semester = semesterRepository.findById(request.semesterId())
                 .orElseThrow(() -> new ResourceNotFoundException("Semester not found with id: " + request.semesterId()));
-        Section section = sectionRepository.findById(request.sectionId())
-                .orElseThrow(() -> new ResourceNotFoundException("Section not found with id: " + request.sectionId()));
+        AcademicGroup academicGroup = academicGroupRepository.findById(request.academicGroupId())
+                .orElseThrow(() -> new ResourceNotFoundException("Academic group not found with id: " + request.academicGroupId()));
         Subject subject = subjectRepository.findById(request.subjectId())
                 .orElseThrow(() -> new ResourceNotFoundException("Subject not found with id: " + request.subjectId()));
 
-        if (courseOfferingRepository.existsBySemesterSemesterIdAndSectionSectionIdAndSubjectSubjectId(
-                request.semesterId(), request.sectionId(), request.subjectId())) {
-            throw new ConflictException("Course offering already exists for the semester, section, and subject.");
+        if (courseOfferingRepository.existsBySemesterSemesterIdAndAcademicGroupGroupIdAndSubjectSubjectId(
+                request.semesterId(), request.academicGroupId(), request.subjectId())) {
+            throw new ConflictException("Course offering already exists for the semester, academic group, and subject.");
         }
 
         try {
-            CourseOffering saved = courseOfferingRepository.save(new CourseOffering(semester, section, subject));
+            CourseOffering saved = courseOfferingRepository.save(new CourseOffering(semester, academicGroup, subject));
             return getCourseOfferingById(saved.getOfferingId());
         } catch (DataIntegrityViolationException exception) {
-            throw new ConflictException("Course offering already exists for the semester, section, and subject.");
+            throw new ConflictException("Course offering already exists for the semester, academic group, and subject.");
         }
     }
 
@@ -86,8 +89,7 @@ public class CourseOfferingService {
                 courseOffering.getOfferingId(),
                 courseOffering.getSemester().getSemesterId(),
                 courseOffering.getSemester().getName(),
-                courseOffering.getSection().getSectionId(),
-                courseOffering.getSection().getSectionName(),
+                academicGroupService.toResponse(courseOffering.getAcademicGroup()),
                 courseOffering.getSubject().getSubjectId(),
                 courseOffering.getSubject().getSubjectCode(),
                 courseOffering.getSubject().getSubjectName()

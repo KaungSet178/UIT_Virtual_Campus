@@ -16,6 +16,8 @@ import java.util.UUID;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
+    long countByStatus(ReservationStatus status);
+
     @Query("""
             SELECT r FROM Reservation r
             JOIN FETCH r.user u

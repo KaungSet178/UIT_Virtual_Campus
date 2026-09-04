@@ -1,0 +1,76 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.kaung:UIT_VIRTUAL_CAMPUS >--------------------
+[INFO] Building UIT_VIRTUAL_CAMPUS 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.5.16:run (default-cli) > test-compile @ UIT_VIRTUAL_CAMPUS >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ UIT_VIRTUAL_CAMPUS ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 5 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ UIT_VIRTUAL_CAMPUS ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ UIT_VIRTUAL_CAMPUS ---
+[INFO] Copying 1 resource from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ UIT_VIRTUAL_CAMPUS ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:3.5.16:run (default-cli) < test-compile @ UIT_VIRTUAL_CAMPUS <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.5.16:run (default-cli) @ UIT_VIRTUAL_CAMPUS ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-09-04T07:37:53.274+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] c.k.u.UitVirtualCampusApplication        : Starting UitVirtualCampusApplication using Java 23.0.2 with PID 20992 (C:\Users\ACER\IdeaProjects\UIT_VIRTUAL_CAMPUS\target\classes started by ACER in C:\Users\ACER\IdeaProjects\UIT_VIRTUAL_CAMPUS)
+2026-09-04T07:37:53.276+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] c.k.u.UitVirtualCampusApplication        : No active profile set, falling back to 1 default profile: "default"
+2026-09-04T07:37:53.336+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-09-04T07:37:53.336+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-09-04T07:37:54.129+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-09-04T07:37:54.201+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 64 ms. Found 17 JPA repository interfaces.
+2026-09-04T07:37:54.681+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8081 (http)
+2026-09-04T07:37:54.692+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-04T07:37:54.692+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.55]
+2026-09-04T07:37:54.721+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-09-04T07:37:54.723+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1386 ms
+2026-09-04T07:37:54.917+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-09-04T07:37:54.962+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-09-04T07:37:54.983+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-09-04T07:37:55.168+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-09-04T07:37:55.190+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-04T07:37:55.998+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@771cb30d
+2026-09-04T07:37:55.999+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-04T07:37:56.326+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 17.6
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-09-04T07:37:57.187+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-09-04T07:37:57.656+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-09-04T07:37:57.843+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-09-04T07:37:59.018+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-09-04T07:37:59.312+06:30  WARN 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : Unable to start LiveReload server
+2026-09-04T07:37:59.361+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8081 (http) with context path '/'
+2026-09-04T07:37:59.371+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [  restartedMain] c.k.u.UitVirtualCampusApplication        : Started UitVirtualCampusApplication in 6.446 seconds (process running for 6.796)
+2026-09-04T07:38:16.259+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [nio-8081-exec-9] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-04T07:38:16.260+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [nio-8081-exec-9] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-04T07:38:16.262+06:30  INFO 20992 --- [UIT_VIRTUAL_CAMPUS] [nio-8081-exec-9] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-09-04T07:38:16.303+06:30  WARN 20992 --- [UIT_VIRTUAL_CAMPUS] [nio-8081-exec-8] c.k.u.s.RestAuthenticationEntryPoint     : Unauthenticated request rejected: /api/events (InsufficientAuthenticationException: Full authentication is required to access this resource)
+2026-09-04T07:38:16.303+06:30  WARN 20992 --- [UIT_VIRTUAL_CAMPUS] [nio-8081-exec-9] c.k.u.s.RestAuthenticationEntryPoint     : Unauthenticated request rejected: /api/events (InsufficientAuthenticationException: Full authentication is required to access this resource)
+2026-09-04T07:38:16.303+06:30  WARN 20992 --- [UIT_VIRTUAL_CAMPUS] [nio-8081-exec-3] c.k.u.s.RestAuthenticationEntryPoint     : Unauthenticated request rejected: /api/events/upcoming (InsufficientAuthenticationException: Full authentication is required to access this resource)

@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.OffsetDateTime;
@@ -70,6 +71,13 @@ public class ClubGallery {
 
     public OffsetDateTime getUploadedAt() {
         return uploadedAt;
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (uploadedAt == null) {
+            uploadedAt = OffsetDateTime.now();
+        }
     }
 
     @Override

@@ -31,10 +31,10 @@ public class CourseOfferingController {
     @GetMapping
     public List<CourseOfferingResponse> listCourseOfferings(
             @RequestParam(required = false) Long semesterId,
-            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) Long academicGroupId,
             @RequestParam(required = false) Long subjectId
     ) {
-        return courseOfferingService.getCourseOfferings(semesterId, sectionId, subjectId);
+        return courseOfferingService.getCourseOfferings(semesterId, academicGroupId, subjectId);
     }
 
     @GetMapping("/{offeringId}")

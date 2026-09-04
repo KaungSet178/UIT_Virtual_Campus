@@ -11,6 +11,8 @@ import java.util.UUID;
 @Repository
 public interface StudentProfileRepository extends JpaRepository<StudentProfile, UUID> {
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "academicGroup"})
     Optional<StudentProfile> findWithUserByStudentId(UUID studentId);
+
+    Optional<StudentProfile> findByStudentNumber(String studentNumber);
 }

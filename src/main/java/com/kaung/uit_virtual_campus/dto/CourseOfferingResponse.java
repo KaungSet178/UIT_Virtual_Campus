@@ -4,8 +4,7 @@ public record CourseOfferingResponse(
         Long offeringId,
         Long semesterId,
         String semesterName,
-        Long sectionId,
-        String sectionName,
+        AcademicGroupResponse academicGroup,
         Long subjectId,
         String subjectCode,
         String subjectName

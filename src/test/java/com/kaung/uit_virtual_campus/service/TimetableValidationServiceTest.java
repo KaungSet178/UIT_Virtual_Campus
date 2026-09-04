@@ -55,11 +55,14 @@ class TimetableValidationServiceTest {
     @Test
     @DisplayName("Should reject overlapping room schedule")
     void rejectsRoomOverlap() {
-        when(scheduleRepository.countOverlappingSchedules(
+        when(scheduleRepository.countDisallowedRoomOverlaps(
                 10L,
                 (short) 1,
                 LocalTime.of(9, 30),
                 LocalTime.of(10, 30),
+                1L,
+                3L,
+                2L,
                 null
         )).thenReturn(1L);
 
@@ -68,6 +71,9 @@ class TimetableValidationServiceTest {
                 (short) 1,
                 LocalTime.of(9, 30),
                 LocalTime.of(10, 30),
+                1L,
+                3L,
+                2L,
                 null
         ))
                 .isInstanceOf(ConflictException.class)
@@ -77,11 +83,14 @@ class TimetableValidationServiceTest {
     @Test
     @DisplayName("Should allow non-overlapping schedule")
     void allowsNoRoomOverlap() {
-        when(scheduleRepository.countOverlappingSchedules(
+        when(scheduleRepository.countDisallowedRoomOverlaps(
                 10L,
                 (short) 1,
                 LocalTime.of(10, 0),
                 LocalTime.of(11, 0),
+                1L,
+                3L,
+                2L,
                 null
         )).thenReturn(0L);
 
@@ -90,6 +99,9 @@ class TimetableValidationServiceTest {
                 (short) 1,
                 LocalTime.of(10, 0),
                 LocalTime.of(11, 0),
+                1L,
+                3L,
+                2L,
                 null
         )).doesNotThrowAnyException();
     }

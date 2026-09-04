@@ -18,7 +18,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             SELECT s FROM Schedule s
             JOIN FETCH s.courseOffering co
             JOIN FETCH co.semester sem
-            JOIN FETCH co.section sec
+            JOIN FETCH co.academicGroup ag
             JOIN FETCH co.subject sub
             JOIN FETCH s.room r
             JOIN FETCH r.floor f
@@ -31,64 +31,77 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             SELECT s FROM Schedule s
             JOIN FETCH s.courseOffering co
             JOIN FETCH co.semester sem
-            JOIN FETCH co.section sec
+            JOIN FETCH co.academicGroup ag
             JOIN FETCH co.subject sub
             JOIN FETCH s.room r
             JOIN FETCH r.floor f
             JOIN FETCH f.building b
             WHERE (:semesterId IS NULL OR sem.semesterId = :semesterId)
-              AND (:sectionId IS NULL OR sec.sectionId = :sectionId)
+              AND (:academicGroupId IS NULL OR ag.groupId = :academicGroupId)
               AND (:subjectId IS NULL OR sub.subjectId = :subjectId)
               AND (:roomId IS NULL OR r.roomId = :roomId)
-            ORDER BY sem.startDate DESC, sec.sectionName ASC, s.dayOfWeek ASC, s.startTime ASC, sub.subjectCode ASC
+            ORDER BY sem.startDate DESC, ag.year ASC, ag.groupType ASC, ag.department ASC, ag.major ASC, ag.sectionName ASC, s.dayOfWeek ASC, s.startTime ASC, sub.subjectCode ASC
             """)
     List<Schedule> findTimetable(
             @Param("semesterId") Long semesterId,
-            @Param("sectionId") Long sectionId,
+            @Param("academicGroupId") Long academicGroupId,
             @Param("subjectId") Long subjectId,
             @Param("roomId") Long roomId
-    );
-
-    @Query("""
-            SELECT COUNT(s) FROM Schedule s
-            WHERE s.room.roomId = :roomId
-              AND s.dayOfWeek = :dayOfWeek
-              AND s.startTime < :requestedEnd
-              AND s.endTime > :requestedStart
-              AND (:excludedScheduleId IS NULL OR s.scheduleId <> :excludedScheduleId)
-            """)
-    long countOverlappingSchedules(
-            @Param("roomId") Long roomId,
-            @Param("dayOfWeek") Short dayOfWeek,
-            @Param("requestedStart") LocalTime requestedStart,
-            @Param("requestedEnd") LocalTime requestedEnd,
-            @Param("excludedScheduleId") Long excludedScheduleId
-    );
-
-    @Query("""
-            SELECT COUNT(s) FROM Schedule s
-            JOIN s.courseOffering co
-            JOIN co.semester sem
-            WHERE s.room.roomId = :roomId
-              AND s.dayOfWeek = :dayOfWeek
-              AND sem.startDate <= :requestedDate
-              AND sem.endDate >= :requestedDate
-              AND s.startTime < :requestedEnd
-              AND s.endTime > :requestedStart
-            """)
-    long countOfficialScheduleConflicts(
-            @Param("roomId") Long roomId,
-            @Param("dayOfWeek") Short dayOfWeek,
-            @Param("requestedDate") LocalDate requestedDate,
-            @Param("requestedStart") LocalTime requestedStart,
-            @Param("requestedEnd") LocalTime requestedEnd
     );
 
     @Query("""
             SELECT s FROM Schedule s
             JOIN FETCH s.courseOffering co
             JOIN FETCH co.semester sem
-            JOIN FETCH co.section sec
+            JOIN FETCH co.academicGroup ag
+            JOIN FETCH co.subject sub
+            JOIN FETCH s.room r
+            JOIN FETCH r.floor f
+            JOIN FETCH f.building b
+            WHERE sem.semesterId = :semesterId
+              AND ag.groupId = :academicGroupId
+            ORDER BY s.dayOfWeek ASC, s.startTime ASC, sub.subjectCode ASC
+            """)
+    List<Schedule> findPersonalTimetable(
+            @Param("semesterId") Long semesterId,
+            @Param("academicGroupId") Long academicGroupId
+    );
+
+    @Query("""
+            SELECT COUNT(s) FROM Schedule s
+            JOIN s.courseOffering co
+            JOIN co.semester sem
+            JOIN co.academicGroup ag
+            JOIN co.subject sub
+            WHERE s.room.roomId = :roomId
+              AND s.dayOfWeek = :dayOfWeek
+              AND s.startTime < :requestedEnd
+              AND s.endTime > :requestedStart
+              AND (:excludedScheduleId IS NULL OR s.scheduleId <> :excludedScheduleId)
+              AND NOT (
+                    sem.semesterId = :semesterId
+                AND sub.subjectId = :subjectId
+                AND ag.groupId <> :academicGroupId
+                AND s.startTime = :requestedStart
+                AND s.endTime = :requestedEnd
+              )
+            """)
+    long countDisallowedRoomOverlaps(
+            @Param("roomId") Long roomId,
+            @Param("dayOfWeek") Short dayOfWeek,
+            @Param("requestedStart") LocalTime requestedStart,
+            @Param("requestedEnd") LocalTime requestedEnd,
+            @Param("semesterId") Long semesterId,
+            @Param("subjectId") Long subjectId,
+            @Param("academicGroupId") Long academicGroupId,
+            @Param("excludedScheduleId") Long excludedScheduleId
+    );
+
+    @Query("""
+            SELECT s FROM Schedule s
+            JOIN FETCH s.courseOffering co
+            JOIN FETCH co.semester sem
+            JOIN FETCH co.academicGroup ag
             JOIN FETCH co.subject sub
             JOIN FETCH s.room r
             JOIN FETCH r.floor f

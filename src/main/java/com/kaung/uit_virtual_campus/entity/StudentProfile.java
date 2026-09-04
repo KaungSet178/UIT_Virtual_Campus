@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -36,8 +37,15 @@ public class StudentProfile {
     @Column(name = "department")
     private String department;
 
+    @Column(name = "programme")
+    private String programme;
+
     @Column(name = "\"year\"")
     private Short year;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "academic_group_id")
+    private AcademicGroup academicGroup;
 
     @OneToMany(mappedBy = "student", fetch = FetchType.LAZY)
     @OrderBy("joinedAt DESC")
@@ -47,11 +55,18 @@ public class StudentProfile {
     }
 
     public StudentProfile(User user, String studentNumber, String department, Short year) {
+        this(user, studentNumber, department, null, year, null);
+    }
+
+    public StudentProfile(User user, String studentNumber, String department,
+                          String programme, Short year, AcademicGroup academicGroup) {
         this.user = user;
         this.studentId = user.getUserId();
         this.studentNumber = studentNumber;
         this.department = department;
+        this.programme = programme;
         this.year = year;
+        this.academicGroup = academicGroup;
     }
 
     public UUID getStudentId() {
@@ -70,8 +85,16 @@ public class StudentProfile {
         return department;
     }
 
+    public String getProgramme() {
+        return programme;
+    }
+
     public Short getYear() {
         return year;
+    }
+
+    public AcademicGroup getAcademicGroup() {
+        return academicGroup;
     }
 
     public List<ClubMembership> getMemberships() {

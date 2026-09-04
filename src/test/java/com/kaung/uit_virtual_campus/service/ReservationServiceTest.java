@@ -101,6 +101,33 @@ class ReservationServiceTest {
     }
 
     @Test
+    @DisplayName("Create reservation rejects the same scheduled slot that availability rejects")
+    void createReservationRejectsUnavailableScheduledSlot() {
+        ReservationCreateRequest request = new ReservationCreateRequest(
+                10L,
+                LocalDate.of(2026, 9, 7),
+                LocalTime.of(8, 30),
+                LocalTime.of(9, 30),
+                " Meeting "
+        );
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(roomRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(room));
+        org.mockito.Mockito.doThrow(new ConflictException("Room is occupied by an official schedule during the requested time."))
+                .when(availabilityService)
+                .assertAvailableForReservation(
+                        10L,
+                        LocalDate.of(2026, 9, 7),
+                        LocalTime.of(8, 30),
+                        LocalTime.of(9, 30),
+                        null
+                );
+
+        assertThatThrownBy(() -> reservationService.createReservation(request))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("official schedule");
+    }
+
+    @Test
     @DisplayName("Approves pending reservation with room lock and approver retained")
     void approveReservation() {
         when(currentUserService.getCurrentUser()).thenReturn(admin);

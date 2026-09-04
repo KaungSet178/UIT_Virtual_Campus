@@ -29,7 +29,8 @@ public class SecurityErrorResponseWriter {
                 status.value(),
                 status.getReasonPhrase(),
                 message,
-                request.getRequestURI()
+                request.getRequestURI(),
+                null
         ));
     }
 }

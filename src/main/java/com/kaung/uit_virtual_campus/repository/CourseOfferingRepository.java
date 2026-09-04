@@ -12,16 +12,16 @@ import java.util.Optional;
 @Repository
 public interface CourseOfferingRepository extends JpaRepository<CourseOffering, Long> {
 
-    boolean existsBySemesterSemesterIdAndSectionSectionIdAndSubjectSubjectId(
+    boolean existsBySemesterSemesterIdAndAcademicGroupGroupIdAndSubjectSubjectId(
             Long semesterId,
-            Long sectionId,
+            Long academicGroupId,
             Long subjectId
     );
 
     @Query("""
             SELECT co FROM CourseOffering co
             JOIN FETCH co.semester sem
-            JOIN FETCH co.section sec
+            JOIN FETCH co.academicGroup ag
             JOIN FETCH co.subject sub
             WHERE co.offeringId = :offeringId
             """)
@@ -30,16 +30,16 @@ public interface CourseOfferingRepository extends JpaRepository<CourseOffering, 
     @Query("""
             SELECT co FROM CourseOffering co
             JOIN FETCH co.semester sem
-            JOIN FETCH co.section sec
+            JOIN FETCH co.academicGroup ag
             JOIN FETCH co.subject sub
             WHERE (:semesterId IS NULL OR sem.semesterId = :semesterId)
-              AND (:sectionId IS NULL OR sec.sectionId = :sectionId)
+              AND (:academicGroupId IS NULL OR ag.groupId = :academicGroupId)
               AND (:subjectId IS NULL OR sub.subjectId = :subjectId)
-            ORDER BY sem.startDate DESC, sec.sectionName ASC, sub.subjectCode ASC
+            ORDER BY sem.startDate DESC, ag.year ASC, ag.groupType ASC, ag.department ASC, ag.major ASC, ag.sectionName ASC, sub.subjectCode ASC
             """)
     List<CourseOffering> findAllWithFilters(
             @Param("semesterId") Long semesterId,
-            @Param("sectionId") Long sectionId,
+            @Param("academicGroupId") Long academicGroupId,
             @Param("subjectId") Long subjectId
     );
 }

@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -22,13 +23,24 @@ public class CurrentUserService {
     }
 
     public UUID getCurrentUserId() {
+        return UUID.fromString(getCurrentJwt().getSubject());
+    }
+
+    public Optional<String> getCurrentUserEmail() {
+        return Optional.ofNullable(getCurrentJwt().getClaimAsString("email"))
+                .map(String::trim)
+                .filter(email -> !email.isEmpty());
+    }
+
+    private Jwt getCurrentJwt() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
             throw new InvalidJwtSubjectException("");
         }
 
         try {
-            return UUID.fromString(jwt.getSubject());
+            UUID.fromString(jwt.getSubject());
+            return jwt;
         } catch (IllegalArgumentException exception) {
             throw new InvalidJwtSubjectException(jwt.getSubject());
         }

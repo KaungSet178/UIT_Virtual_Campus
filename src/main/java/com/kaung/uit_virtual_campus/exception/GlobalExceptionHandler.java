@@ -6,13 +6,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.Instant;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,7 +40,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         log.warn("Authenticated Supabase user is missing from public.users");
-        return error(HttpStatus.UNAUTHORIZED, "Authenticated user record was not found", request);
+        return error(HttpStatus.NOT_FOUND, "Authenticated user record was not found", request);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -88,8 +94,44 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .map(error -> error.getField() + " " + error.getDefaultMessage())
                 .orElse("Request validation failed");
+        Map<String, String> fieldErrors = exception.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.toMap(
+                        error -> error.getField(),
+                        error -> error.getDefaultMessage() == null ? "Invalid value" : error.getDefaultMessage(),
+                        (first, ignored) -> first,
+                        TreeMap::new
+                ));
         log.warn("Request validation failed: {}", message);
+        return error(HttpStatus.BAD_REQUEST, "Validation failed", request, fieldErrors);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiErrorResponse> handleMissingRequestParameter(
+            MissingServletRequestParameterException exception,
+            HttpServletRequest request
+    ) {
+        String message = "Missing required request parameter: " + exception.getParameterName();
+        log.warn("Request missing parameter: {}", exception.getParameterName());
         return error(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException exception,
+            HttpServletRequest request
+    ) {
+        String message = "Invalid value for request parameter: " + exception.getName();
+        log.warn("Request parameter type mismatch: {}", exception.getName());
+        return error(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleMalformedJson(
+            HttpMessageNotReadableException exception,
+            HttpServletRequest request
+    ) {
+        log.warn("Malformed request body rejected: {}", request.getRequestURI());
+        return error(HttpStatus.BAD_REQUEST, "Malformed JSON request body", request);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -108,12 +150,22 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ApiErrorResponse> error(HttpStatus status, String message, HttpServletRequest request) {
+        return error(status, message, request, null);
+    }
+
+    private ResponseEntity<ApiErrorResponse> error(
+            HttpStatus status,
+            String message,
+            HttpServletRequest request,
+            Map<String, String> fieldErrors
+    ) {
         return ResponseEntity.status(status).body(new ApiErrorResponse(
                 Instant.now(),
                 status.value(),
                 status.getReasonPhrase(),
                 message,
-                request.getRequestURI()
+                request.getRequestURI(),
+                fieldErrors
         ));
     }
 }
