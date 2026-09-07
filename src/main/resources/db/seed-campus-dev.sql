@@ -49,16 +49,10 @@ INSERT INTO public.rooms (floor_id, room_number, room_name, room_type, descripti
 (101, '111', 'Room 111', 'CLASSROOM', 'Standard Classroom 111', 'room_111'),
 (101, '112', 'Room 112', 'CLASSROOM', 'Standard Classroom 112', 'room_112'),
 (101, '113', 'Room 113', 'CLASSROOM', 'Standard Classroom 113', 'room_113'),
-(101, '114', 'Room 114', 'CLASSROOM', 'Standard Classroom 114', 'room_114'),
-(101, '115', 'Room 115', 'CLASSROOM', 'Standard Classroom 115', 'room_115'),
-(101, '116', 'Room 116', 'CLASSROOM', 'Standard Classroom 116', 'room_116'),
 -- Floor 2
 (102, '121', 'Room 121', 'CLASSROOM', 'Standard Classroom 121', 'room_121'),
 (102, '122', 'Room 122', 'CLASSROOM', 'Standard Classroom 122', 'room_122'),
 (102, '123', 'Room 123', 'CLASSROOM', 'Standard Classroom 123', 'room_123'),
-(102, '124', 'Room 124', 'CLASSROOM', 'Standard Classroom 124', 'room_124'),
-(102, '125', 'Room 125', 'CLASSROOM', 'Standard Classroom 125', 'room_125'),
-(102, '126', 'Room 126', 'CLASSROOM', 'Standard Classroom 126', 'room_126'),
 -- Floor 3
 (103, '131', 'Room 131', 'CLASSROOM', 'Standard Classroom 131', 'room_131'),
 (103, '132', 'Room 132', 'CLASSROOM', 'Standard Classroom 132', 'room_132'),
@@ -90,19 +84,9 @@ INSERT INTO public.rooms (floor_id, room_number, room_name, room_type, descripti
 
 -- Building 2 Rooms (211 - 266)
 -- Floor 1
-(201, '211', 'Physics Lab', 'LABORATORY', 'General Physics Laboratory', 'room_211'),
-(201, '212', 'Room 212', 'CLASSROOM', 'Lecture Room 212', 'room_212'),
 (201, '213', 'Room 213', 'CLASSROOM', 'Lecture Room 213', 'room_213'),
 (201, '214', 'Room 214', 'CLASSROOM', 'Lecture Room 214', 'room_214'),
 (201, '215', 'Room 215', 'CLASSROOM', 'Lecture Room 215', 'room_215'),
-(201, '216', 'Room 216', 'CLASSROOM', 'Lecture Room 216', 'room_216'),
--- Floor 2
-(202, '221', 'Room 221', 'CLASSROOM', 'Lecture Room 221', 'room_221'),
-(202, '222', 'Room 222', 'CLASSROOM', 'Lecture Room 222', 'room_222'),
-(202, '223', 'Room 223', 'CLASSROOM', 'Lecture Room 223', 'room_223'),
-(202, '224', 'Room 224', 'CLASSROOM', 'Lecture Room 224', 'room_224'),
-(202, '225', 'Room 225', 'CLASSROOM', 'Lecture Room 225', 'room_225'),
-(202, '226', 'Room 226', 'CLASSROOM', 'Lecture Room 226', 'room_226'),
 -- Floor 3
 (203, '231', 'Database Lab', 'LABORATORY', 'Database and Big Data Laboratory', 'room_231'),
 (203, '232', 'Software Engineering Lab', 'LABORATORY', 'Software Development Lab', 'room_232'),
@@ -136,10 +120,6 @@ INSERT INTO public.rooms (floor_id, room_number, room_name, room_type, descripti
 -- Floor 1
 (301, '311', 'Hardware Lab', 'LABORATORY', 'Computer Architecture and Hardware Lab', 'room_311'),
 (301, '312', 'Embedded Systems Lab', 'LABORATORY', 'Embedded Systems and IoT Lab', 'room_312'),
-(301, '313', 'Room 313', 'CLASSROOM', 'Tutorial Room 313', 'room_313'),
-(301, '314', 'Room 314', 'CLASSROOM', 'Tutorial Room 314', 'room_314'),
-(301, '315', 'Room 315', 'CLASSROOM', 'Tutorial Room 315', 'room_315'),
-(301, '316', 'Room 316', 'CLASSROOM', 'Tutorial Room 316', 'room_316'),
 -- Floor 2
 (302, '321', 'Networking Lab', 'LABORATORY', 'Computer Networks and Cisco Lab', 'room_321'),
 (302, '322', 'Room 322', 'CLASSROOM', 'Tutorial Room 322', 'room_322'),
