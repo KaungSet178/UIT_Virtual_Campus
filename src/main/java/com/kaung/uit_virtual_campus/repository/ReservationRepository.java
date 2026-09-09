@@ -94,4 +94,19 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("requestedStart") LocalTime requestedStart,
             @Param("requestedEnd") LocalTime requestedEnd
     );
+
+    // Same predicate as findApprovedOverlappingReservations minus the roomId
+    // filter, for the bulk "which rooms are occupied right now" check.
+    @Query("""
+            SELECT DISTINCT r.room.roomId FROM Reservation r
+            WHERE r.reservationDate = :reservationDate
+              AND r.status = com.kaung.uit_virtual_campus.entity.ReservationStatus.APPROVED
+              AND r.startTime < :requestedEnd
+              AND r.endTime > :requestedStart
+            """)
+    List<Long> findOccupiedRoomIdsByReservation(
+            @Param("reservationDate") LocalDate reservationDate,
+            @Param("requestedStart") LocalTime requestedStart,
+            @Param("requestedEnd") LocalTime requestedEnd
+    );
 }

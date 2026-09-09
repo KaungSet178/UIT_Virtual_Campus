@@ -121,4 +121,25 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("requestedStart") LocalTime requestedStart,
             @Param("requestedEnd") LocalTime requestedEnd
     );
+
+    // Same predicate as findOfficialScheduleConflicts minus the roomId filter,
+    // for the bulk "which rooms are occupied right now" check — selecting the
+    // distinct room id directly is cheaper than fetching whole Schedule rows
+    // for something that only needs a yes/no per room.
+    @Query("""
+            SELECT DISTINCT s.room.roomId FROM Schedule s
+            JOIN s.courseOffering co
+            JOIN co.semester sem
+            WHERE s.dayOfWeek = :dayOfWeek
+              AND sem.startDate <= :requestedDate
+              AND sem.endDate >= :requestedDate
+              AND s.startTime < :requestedEnd
+              AND s.endTime > :requestedStart
+            """)
+    List<Long> findOccupiedRoomIdsBySchedule(
+            @Param("dayOfWeek") Short dayOfWeek,
+            @Param("requestedDate") LocalDate requestedDate,
+            @Param("requestedStart") LocalTime requestedStart,
+            @Param("requestedEnd") LocalTime requestedEnd
+    );
 }

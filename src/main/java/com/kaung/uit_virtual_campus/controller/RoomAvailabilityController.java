@@ -1,6 +1,7 @@
 package com.kaung.uit_virtual_campus.controller;
 
 import com.kaung.uit_virtual_campus.dto.RoomAvailabilityResponse;
+import com.kaung.uit_virtual_campus.dto.RoomOccupancyResponse;
 import com.kaung.uit_virtual_campus.service.RoomAvailabilityService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,5 +31,13 @@ public class RoomAvailabilityController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime endTime
     ) {
         return roomAvailabilityService.getAvailability(roomId, date, startTime, endTime);
+    }
+
+    // Distinct path shape from /{roomId}/availability (3 segments vs 4), so no
+    // routing ambiguity. Always "right now" — this only exists to power a
+    // currently-reservable/occupied filter, not an arbitrary-slot bulk check.
+    @GetMapping("/availability")
+    public RoomOccupancyResponse getCurrentRoomOccupancy() {
+        return roomAvailabilityService.getCurrentOccupancy();
     }
 }

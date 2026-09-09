@@ -2,6 +2,7 @@ package com.kaung.uit_virtual_campus.service;
 
 import com.kaung.uit_virtual_campus.dto.AvailabilityConflictResponse;
 import com.kaung.uit_virtual_campus.dto.RoomAvailabilityResponse;
+import com.kaung.uit_virtual_campus.dto.RoomOccupancyResponse;
 import com.kaung.uit_virtual_campus.entity.Reservation;
 import com.kaung.uit_virtual_campus.entity.Schedule;
 import com.kaung.uit_virtual_campus.exception.ConflictException;
@@ -12,10 +13,13 @@ import com.kaung.uit_virtual_campus.repository.ScheduleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional(readOnly = true)
@@ -24,15 +28,18 @@ public class RoomAvailabilityService {
     private final RoomRepository roomRepository;
     private final ScheduleRepository scheduleRepository;
     private final ReservationRepository reservationRepository;
+    private final Clock clock;
 
     public RoomAvailabilityService(
             RoomRepository roomRepository,
             ScheduleRepository scheduleRepository,
-            ReservationRepository reservationRepository
+            ReservationRepository reservationRepository,
+            Clock clock
     ) {
         this.roomRepository = roomRepository;
         this.scheduleRepository = scheduleRepository;
         this.reservationRepository = reservationRepository;
+        this.clock = clock;
     }
 
     public RoomAvailabilityResponse getAvailability(
@@ -58,6 +65,23 @@ public class RoomAvailabilityService {
                 conflicts.isEmpty(),
                 conflicts
         );
+    }
+
+    // Bulk sibling of getAvailability: same two occupancy sources (official
+    // schedule + approved reservations), same overlap predicate, just with the
+    // roomId filter dropped so it covers every room in two queries instead of
+    // one query per room. Zero-width window (start == end == now) still works
+    // correctly against `start < requestedEnd AND end > requestedStart` — it
+    // reduces to "does this block currently contain this instant".
+    public RoomOccupancyResponse getCurrentOccupancy() {
+        LocalDate date = LocalDate.now(clock);
+        LocalTime time = LocalTime.now(clock);
+
+        Set<Long> occupiedRoomIds = new LinkedHashSet<>();
+        occupiedRoomIds.addAll(scheduleRepository.findOccupiedRoomIdsBySchedule(dayOfWeek(date), date, time, time));
+        occupiedRoomIds.addAll(reservationRepository.findOccupiedRoomIdsByReservation(date, time, time));
+
+        return new RoomOccupancyResponse(date, time, new ArrayList<>(occupiedRoomIds));
     }
 
     public void assertAvailableForReservation(
@@ -140,7 +164,7 @@ public class RoomAvailabilityService {
                 "APPROVED_RESERVATION",
                 reservation.getStartTime(),
                 reservation.getEndTime(),
-                "Approved reservation"
+                "Reservation: " + reservation.getPurpose()
         );
     }
 
