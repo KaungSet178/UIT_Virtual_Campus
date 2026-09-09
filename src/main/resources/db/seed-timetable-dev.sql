@@ -26,7 +26,12 @@ INSERT INTO public.subjects (subject_code, subject_name, description)
 VALUES
     ('CS101', 'Programming Fundamentals', 'Introduction to programming concepts'),
     ('CS102', 'Database Systems', 'Relational database design and SQL'),
-    ('CS301', 'Software Engineering', 'Software development process and design')
+    ('CS301', 'Software Engineering', 'Software development process and design'),
+    ('CST-4105', 'Enterprise Applications Development using Java (Keystone Project)', 'Second Year elective subject'),
+    ('CST-4307', 'Advanced Web Technology with PHP (Keystone Project)', 'Second Year elective subject'),
+    ('CST-4406', 'Data and Computer Communications', 'Second Year elective subject'),
+    ('CST-4407', 'Engineering Circuits', 'Second Year elective subject'),
+    ('CST-4408', 'Foundations of Cybersecurity', 'Second Year elective subject')
 ON CONFLICT (subject_code) DO NOTHING;
 
 INSERT INTO public.course_offerings (semester_id, academic_group_id, subject_id)

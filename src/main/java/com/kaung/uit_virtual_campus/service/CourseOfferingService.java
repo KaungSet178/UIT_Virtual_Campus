@@ -4,6 +4,7 @@ import com.kaung.uit_virtual_campus.dto.CourseOfferingRequest;
 import com.kaung.uit_virtual_campus.dto.CourseOfferingResponse;
 import com.kaung.uit_virtual_campus.entity.AcademicGroup;
 import com.kaung.uit_virtual_campus.entity.CourseOffering;
+import com.kaung.uit_virtual_campus.entity.CourseOfferingType;
 import com.kaung.uit_virtual_campus.entity.Semester;
 import com.kaung.uit_virtual_campus.entity.Subject;
 import com.kaung.uit_virtual_campus.exception.ConflictException;
@@ -42,10 +43,22 @@ public class CourseOfferingService {
         this.academicGroupService = academicGroupService;
     }
 
-    public List<CourseOfferingResponse> getCourseOfferings(Long semesterId, Long academicGroupId, Long subjectId) {
-        return courseOfferingRepository.findAllWithFilters(semesterId, academicGroupId, subjectId).stream()
+    public List<CourseOfferingResponse> getCourseOfferings(
+            Long semesterId,
+            Long academicGroupId,
+            Long subjectId,
+            CourseOfferingType type
+    ) {
+        List<CourseOffering> offerings = type == null
+                ? courseOfferingRepository.findAllWithFilters(semesterId, academicGroupId, subjectId)
+                : courseOfferingRepository.findAllWithFilters(semesterId, academicGroupId, subjectId, type);
+        return offerings.stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public List<CourseOfferingResponse> getCourseOfferings(Long semesterId, Long academicGroupId, Long subjectId) {
+        return getCourseOfferings(semesterId, academicGroupId, subjectId, null);
     }
 
     public CourseOfferingResponse getCourseOfferingById(Long offeringId) {
@@ -69,8 +82,40 @@ public class CourseOfferingService {
         }
 
         try {
-            CourseOffering saved = courseOfferingRepository.save(new CourseOffering(semester, academicGroup, subject));
+            CourseOffering saved = courseOfferingRepository.save(new CourseOffering(
+                    semester,
+                    academicGroup,
+                    subject,
+                    typeOrDefault(request.type())
+            ));
             return getCourseOfferingById(saved.getOfferingId());
+        } catch (DataIntegrityViolationException exception) {
+            throw new ConflictException("Course offering already exists for the semester, academic group, and subject.");
+        }
+    }
+
+    @Transactional
+    public CourseOfferingResponse updateCourseOffering(Long offeringId, CourseOfferingRequest request) {
+        CourseOffering courseOffering = courseOfferingRepository.findByIdWithDetails(offeringId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course offering not found with id: " + offeringId));
+        Semester semester = semesterRepository.findById(request.semesterId())
+                .orElseThrow(() -> new ResourceNotFoundException("Semester not found with id: " + request.semesterId()));
+        AcademicGroup academicGroup = academicGroupRepository.findById(request.academicGroupId())
+                .orElseThrow(() -> new ResourceNotFoundException("Academic group not found with id: " + request.academicGroupId()));
+        Subject subject = subjectRepository.findById(request.subjectId())
+                .orElseThrow(() -> new ResourceNotFoundException("Subject not found with id: " + request.subjectId()));
+
+        boolean keyChanged = !courseOffering.getSemester().getSemesterId().equals(request.semesterId())
+                || !courseOffering.getAcademicGroup().getGroupId().equals(request.academicGroupId())
+                || !courseOffering.getSubject().getSubjectId().equals(request.subjectId());
+        if (keyChanged && courseOfferingRepository.existsBySemesterSemesterIdAndAcademicGroupGroupIdAndSubjectSubjectId(
+                request.semesterId(), request.academicGroupId(), request.subjectId())) {
+            throw new ConflictException("Course offering already exists for the semester, academic group, and subject.");
+        }
+
+        try {
+            courseOffering.update(semester, academicGroup, subject, typeOrDefault(request.type()));
+            return getCourseOfferingById(courseOffering.getOfferingId());
         } catch (DataIntegrityViolationException exception) {
             throw new ConflictException("Course offering already exists for the semester, academic group, and subject.");
         }
@@ -92,7 +137,12 @@ public class CourseOfferingService {
                 academicGroupService.toResponse(courseOffering.getAcademicGroup()),
                 courseOffering.getSubject().getSubjectId(),
                 courseOffering.getSubject().getSubjectCode(),
-                courseOffering.getSubject().getSubjectName()
+                courseOffering.getSubject().getSubjectName(),
+                courseOffering.getType()
         );
+    }
+
+    private CourseOfferingType typeOrDefault(CourseOfferingType type) {
+        return type == null ? CourseOfferingType.MANDATORY : type;
     }
 }

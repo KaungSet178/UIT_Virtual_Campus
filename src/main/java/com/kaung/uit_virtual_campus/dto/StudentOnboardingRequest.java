@@ -8,6 +8,10 @@ public record StudentOnboardingRequest(
         @NotBlank @Size(max = 255) String fullName,
         @NotBlank @Size(max = 50) String studentNumber,
         @NotNull Long academicGroupId,
-        @Size(max = 50) String phone
+        @Size(max = 50) String phone,
+        Long electiveCourseOfferingId
 ) {
+    public StudentOnboardingRequest(String fullName, String studentNumber, Long academicGroupId, String phone) {
+        this(fullName, studentNumber, academicGroupId, phone, null);
+    }
 }

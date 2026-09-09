@@ -51,6 +51,10 @@ public class StudentProfile {
     @OrderBy("joinedAt DESC")
     private List<ClubMembership> memberships = new ArrayList<>();
 
+    @OneToMany(mappedBy = "studentProfile", fetch = FetchType.LAZY)
+    @OrderBy("createdAt DESC")
+    private List<StudentElectiveEnrollment> electiveEnrollments = new ArrayList<>();
+
     protected StudentProfile() {
     }
 
@@ -99,6 +103,10 @@ public class StudentProfile {
 
     public List<ClubMembership> getMemberships() {
         return Collections.unmodifiableList(memberships);
+    }
+
+    public List<StudentElectiveEnrollment> getElectiveEnrollments() {
+        return Collections.unmodifiableList(electiveEnrollments);
     }
 
     @Override

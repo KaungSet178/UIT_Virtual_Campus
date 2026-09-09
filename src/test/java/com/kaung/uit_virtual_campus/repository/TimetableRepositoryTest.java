@@ -4,11 +4,13 @@ import com.kaung.uit_virtual_campus.entity.AcademicGroup;
 import com.kaung.uit_virtual_campus.entity.AcademicGroupType;
 import com.kaung.uit_virtual_campus.entity.Building;
 import com.kaung.uit_virtual_campus.entity.CourseOffering;
+import com.kaung.uit_virtual_campus.entity.CourseOfferingType;
 import com.kaung.uit_virtual_campus.entity.Floor;
 import com.kaung.uit_virtual_campus.entity.Room;
 import com.kaung.uit_virtual_campus.entity.Schedule;
 import com.kaung.uit_virtual_campus.entity.Semester;
 import com.kaung.uit_virtual_campus.entity.StudentProfile;
+import com.kaung.uit_virtual_campus.entity.StudentElectiveEnrollment;
 import com.kaung.uit_virtual_campus.entity.Subject;
 import com.kaung.uit_virtual_campus.entity.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -405,5 +407,78 @@ class TimetableRepositoryTest {
         assertThat(results).extracting(Schedule::getDayOfWeek).containsExactly((short) 1, (short) 1);
         assertThat(results).extracting(Schedule::getStartTime)
                 .containsExactly(LocalTime.of(9, 0), LocalTime.of(11, 0));
+    }
+
+    @Test
+    @DisplayName("Personal timetable query returns mandatory schedules only")
+    void personalTimetableReturnsMandatorySchedulesOnly() {
+        Subject electiveSubject = entityManager.persist(new Subject("CST-4105", "Java Keystone", null));
+        CourseOffering electiveOffering = entityManager.persist(new CourseOffering(
+                semester,
+                academicGroup,
+                electiveSubject,
+                CourseOfferingType.ELECTIVE
+        ));
+        entityManager.persist(new Schedule(electiveOffering, room, (short) 2, LocalTime.of(13, 0), LocalTime.of(14, 0)));
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Schedule> results = scheduleRepository.findPersonalTimetable(
+                semester.getSemesterId(),
+                academicGroup.getGroupId()
+        );
+
+        assertThat(results).extracting(schedule -> schedule.getCourseOffering().getType())
+                .containsOnly(CourseOfferingType.MANDATORY);
+        assertThat(results).extracting(schedule -> schedule.getCourseOffering().getSubject().getSubjectCode())
+                .doesNotContain("CST-4105");
+    }
+
+    @Test
+    @DisplayName("Student elective timetable query returns only selected elective schedules")
+    void studentElectiveTimetableReturnsSelectedElectivesOnly() {
+        UUID userId = UUID.fromString("55555555-5555-5555-5555-555555555555");
+        User user = entityManager.persist(new User(
+                userId,
+                "student-elective@uit.example",
+                "Elective Student",
+                null,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                Set.of()
+        ));
+        StudentProfile profile = entityManager.persist(new StudentProfile(
+                user,
+                "UIT-005",
+                "CS",
+                "Software Engineering",
+                (short) 3,
+                academicGroup
+        ));
+        Subject selectedSubject = entityManager.persist(new Subject("CST-4105", "Java Keystone", null));
+        Subject notSelectedSubject = entityManager.persist(new Subject("CST-4408", "Cybersecurity", null));
+        CourseOffering selectedOffering = entityManager.persist(new CourseOffering(
+                semester,
+                academicGroup,
+                selectedSubject,
+                CourseOfferingType.ELECTIVE
+        ));
+        CourseOffering notSelectedOffering = entityManager.persist(new CourseOffering(
+                semester,
+                academicGroup,
+                notSelectedSubject,
+                CourseOfferingType.ELECTIVE
+        ));
+        entityManager.persist(new Schedule(selectedOffering, room, (short) 2, LocalTime.of(13, 0), LocalTime.of(14, 0)));
+        entityManager.persist(new Schedule(notSelectedOffering, room, (short) 3, LocalTime.of(13, 0), LocalTime.of(14, 0)));
+        entityManager.persist(new StudentElectiveEnrollment(profile, selectedOffering));
+        entityManager.flush();
+        entityManager.clear();
+
+        List<Schedule> results = scheduleRepository.findStudentElectiveSchedules(userId, semester.getSemesterId());
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getCourseOffering().getSubject().getSubjectCode()).isEqualTo("CST-4105");
+        assertThat(results.get(0).getCourseOffering().getType()).isEqualTo(CourseOfferingType.ELECTIVE);
     }
 }

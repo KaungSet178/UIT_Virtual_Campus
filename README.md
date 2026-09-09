@@ -77,9 +77,20 @@ Room (1:M) -> Schedule
 
 A `CourseOffering` represents one subject taught to one academic group during one semester. The database enforces uniqueness for `(semester_id, academic_group_id, subject_id)`.
 
+`CourseOffering.type` controls how a course appears in student timetables:
+- `MANDATORY` offerings are automatically shown to every student in the offering's `AcademicGroup`.
+- `ELECTIVE` offerings are shown only to students who have a `StudentElectiveEnrollment` for that offering.
+
 Student academic identity uses this path:
 ```text
 User -> StudentProfile -> AcademicGroup -> CourseOffering -> Schedule
+```
+
+Personalized student timetables are:
+```text
+AcademicGroup mandatory timetable
++
+Student elective enrollments
 ```
 
 `AcademicGroup` is the source of truth for timetable membership. Year 1 and Year 2 groups use `groupType = "SECTION"` with `sectionName`; Year 3+ groups use `groupType = "MAJOR"` with `department` and `major`.
@@ -196,7 +207,7 @@ Schema limitation: `public.events.club_id` uses `ON DELETE SET NULL`. If a club 
 
 ## API Endpoints
 
-All campus endpoints require an authenticated Bearer token.
+Campus endpoints require an authenticated Bearer token unless explicitly documented as public read-only signup/reference data.
 
 ### Current User API
 - `GET /api/me` - Return the authenticated application user, roles, profile image, and student profile when present.
@@ -208,11 +219,12 @@ Student onboarding request:
   "fullName": "Kaung Set Thar",
   "studentNumber": "UIT-001",
   "academicGroupId": 1,
-  "phone": null
+  "phone": null,
+  "electiveCourseOfferingId": 101
 }
 ```
 
-The endpoint derives identity from `jwt.sub` and email from the authenticated Supabase JWT. If the Supabase auth trigger has already inserted `public.users`, that row is completed. If the trigger has not inserted it yet, the backend creates the matching `public.users` row for the authenticated UUID. `AcademicGroup` is the timetable identity source: Year 1/2 `SECTION` groups derive profile year with null department/programme, and Year 3-5 `MAJOR` groups derive year, department, and programme from the selected group.
+The endpoint derives identity from `jwt.sub` and email from the authenticated Supabase JWT. If the Supabase auth trigger has already inserted `public.users`, that row is completed. If the trigger has not inserted it yet, the backend creates the matching `public.users` row for the authenticated UUID. `AcademicGroup` is the timetable identity source: Year 1/2 `SECTION` groups derive profile year with null department/programme, and Year 3-5 `MAJOR` groups derive year, department, and programme from the selected group. When the selected academic group has active elective offerings, `electiveCourseOfferingId` is required and profile creation plus elective enrollment run in the same transaction.
 
 Sample response:
 ```json
@@ -265,9 +277,17 @@ Sample response:
 ### Course Offering APIs
 - `GET /api/course-offerings` - List course offerings.
 - `GET /api/course-offerings/{offeringId}` - Get a course offering.
-- `GET /api/course-offerings?semesterId={id}&academicGroupId={id}&subjectId={id}` - Filter course offerings.
-- `POST /api/course-offerings` - Create a course offering. Requires `ROLE_ADMIN`.
+- `GET /api/course-offerings?semesterId={id}&academicGroupId={id}&subjectId={id}&type={MANDATORY|ELECTIVE}` - Filter course offerings.
+- `POST /api/course-offerings` - Create a course offering. Requires `ROLE_ADMIN`. If `type` is omitted, it defaults to `MANDATORY`.
+- `PUT /api/course-offerings/{offeringId}` - Update a course offering, including `type`. Requires `ROLE_ADMIN`.
 - `DELETE /api/course-offerings/{offeringId}` - Delete a course offering. Requires `ROLE_ADMIN`.
+
+### Student Elective APIs
+- `GET /api/electives/available?academicGroupId={id}` - Public read-only signup discovery for active-semester elective offerings in an academic group. Does not require a `StudentProfile`.
+- `GET /api/electives/me/available` - List active-semester elective offerings available to the authenticated student's academic group. Requires `ROLE_STUDENT`.
+- `GET /api/electives/me` - List the authenticated student's active-semester elective enrollments. Requires `ROLE_STUDENT`.
+- `POST /api/electives/me/{courseOfferingId}` - Enroll the authenticated student in an elective offering. Requires `ROLE_STUDENT`.
+- `DELETE /api/electives/me/{courseOfferingId}` - Remove the authenticated student's elective enrollment. Requires `ROLE_STUDENT`.
 
 ### Schedule & Timetable APIs
 - `GET /api/timetable` - List timetable entries.
@@ -279,9 +299,11 @@ Sample response:
 - `PUT /api/schedules/{scheduleId}` - Update a schedule. Requires `ROLE_ADMIN`.
 - `DELETE /api/schedules/{scheduleId}` - Delete a schedule. Requires `ROLE_ADMIN`.
 
-All timetable, schedule, and reference-data GET endpoints require an authenticated Bearer token.
+Timetable and schedule GET endpoints require an authenticated Bearer token. Public signup/reference exceptions are `GET /api/academic-groups`, `GET /api/academic-groups/{groupId}`, and `GET /api/electives/available?academicGroupId={id}`.
 
 `GET /api/timetable/me` derives the academic group from the authenticated user's `StudentProfile`; the frontend must not send `academicGroupId`, `sectionId`, `year`, or `studentId`. The active semester is determined by the current date where `startDate <= today` and `endDate >= today`. If the student has no assigned academic group, the endpoint returns a conflict response. If no semester is active, it returns an empty list. Multiple active semesters are treated as a data conflict.
+
+For student elective enrollment, the backend validates that the selected offering exists, is `ELECTIVE`, belongs to the active semester, belongs to the student's academic group, is not already selected, and does not overlap the student's mandatory timetable or other selected electives.
 
 ### Reservation APIs
 - `POST /api/reservations` - Create a pending room reservation request.
@@ -445,6 +467,8 @@ If both conflict types are present, display detailed conflicts or apply a determ
 
 The current schema does not contain lecturer data. Personalized timetable views should use `GET /api/timetable/me`; grouping comes from `student_profiles.academic_group_id`, not a frontend-selected section or frontend inference from year/department/programme.
 
+`ScheduleResponse.courseType` is `MANDATORY` or `ELECTIVE`. Existing schedule fields remain unchanged; the extra field allows clients to label selected elective classes without changing the core timetable rendering path.
+
 ### Three.js Contract
 
 `RoomResponse.modelObjectId` must match the Three.js object's `object.name` or equivalent metadata.
@@ -551,7 +575,13 @@ Phase 3 timetable seed data is located at:
 ```text
 src/main/resources/db/seed-timetable-dev.sql
 ```
-Run the campus seed first, then the timetable seed. It inserts sample semesters, academic groups, subjects, course offerings, and non-overlapping schedules.
+Run the campus seed first, then the timetable seed. It inserts sample semesters, academic groups, subjects, course offerings, non-overlapping schedules, and missing second-year elective subject rows.
+
+Elective schema migration SQL is located at:
+```text
+src/main/resources/db/migration-electives.sql
+```
+It adds `course_offerings.offering_type`, backfills existing offerings to `MANDATORY`, creates `student_elective_enrollments`, adds foreign keys, uniqueness, indexes, and a trigger that rejects enrollments pointing at non-elective offerings.
 
 Phase 4 reservation seed data is located at:
 ```text
