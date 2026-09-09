@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -52,6 +53,9 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    private StudentProfile studentProfile;
+
     protected User() {
     }
 
@@ -96,6 +100,10 @@ public class User {
 
     public Set<Role> getRoles() {
         return Set.copyOf(roles);
+    }
+
+    public StudentProfile getStudentProfile() {
+        return studentProfile;
     }
 
     public void completeProfile(String fullName, String phone) {

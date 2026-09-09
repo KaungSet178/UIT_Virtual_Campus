@@ -55,6 +55,9 @@ class StudentOnboardingServiceTest {
     @Mock
     private AcademicGroupRepository academicGroupRepository;
 
+    @Mock
+    private StudentElectiveService studentElectiveService;
+
     private StudentOnboardingService service;
     private UUID userId;
     private Role studentRole;
@@ -68,7 +71,8 @@ class StudentOnboardingServiceTest {
                 userRepository,
                 roleRepository,
                 studentProfileRepository,
-                academicGroupRepository
+                academicGroupRepository,
+                studentElectiveService
         );
         userId = UUID.fromString("11111111-1111-1111-1111-111111111111");
         studentRole = new Role((short) 1, "STUDENT");
@@ -203,6 +207,35 @@ class StudentOnboardingServiceTest {
         service.completeStudentOnboarding(new StudentOnboardingRequest("Student User", "UIT-004", 1L, null));
 
         assertThat(existingStudent.getRoles()).containsExactly(studentRole);
+    }
+
+    @Test
+    @DisplayName("Onboarding enrolls selected elective course offering with the new student profile")
+    void onboardingEnrollsSelectedElective() {
+        AcademicGroup section = new AcademicGroup(2L, (short) 2, AcademicGroupType.SECTION, "A", null, null);
+        StudentOnboardingRequest request = new StudentOnboardingRequest(
+                "Student User",
+                "UIT-005",
+                2L,
+                null,
+                10L
+        );
+        CurrentUserResponse expected = response(section, null, null, (short) 2);
+        when(currentUserService.getCurrentUserId()).thenReturn(userId);
+        when(userRepository.findWithRolesByUserId(userId)).thenReturn(Optional.of(user));
+        when(roleRepository.findByRoleNameIgnoreCase("STUDENT")).thenReturn(Optional.of(studentRole));
+        when(studentProfileRepository.findWithUserByStudentId(userId)).thenReturn(Optional.empty());
+        when(studentProfileRepository.findByStudentNumber("UIT-005")).thenReturn(Optional.empty());
+        when(academicGroupRepository.findById(2L)).thenReturn(Optional.of(section));
+        when(studentProfileRepository.save(any(StudentProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(currentUserProfileService.getCurrentUserProfile()).thenReturn(expected);
+
+        CurrentUserResponse response = service.completeStudentOnboarding(request);
+
+        assertThat(response).isSameAs(expected);
+        ArgumentCaptor<StudentProfile> profileCaptor = ArgumentCaptor.forClass(StudentProfile.class);
+        verify(studentProfileRepository).save(profileCaptor.capture());
+        verify(studentElectiveService).enrollForOnboarding(profileCaptor.getValue(), 10L);
     }
 
     @Test

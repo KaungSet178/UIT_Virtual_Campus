@@ -6,6 +6,7 @@ import com.kaung.uit_virtual_campus.dto.AcademicGroupResponse;
 import com.kaung.uit_virtual_campus.entity.AcademicGroup;
 import com.kaung.uit_virtual_campus.entity.AcademicGroupType;
 import com.kaung.uit_virtual_campus.entity.CourseOffering;
+import com.kaung.uit_virtual_campus.entity.CourseOfferingType;
 import com.kaung.uit_virtual_campus.entity.Semester;
 import com.kaung.uit_virtual_campus.entity.Subject;
 import com.kaung.uit_virtual_campus.exception.ConflictException;
@@ -102,6 +103,41 @@ class CourseOfferingServiceTest {
         CourseOfferingResponse response = courseOfferingService.createCourseOffering(request);
 
         assertThat(response.offeringId()).isEqualTo(4L);
+        assertThat(response.type()).isEqualTo(CourseOfferingType.MANDATORY);
+    }
+
+    @Test
+    @DisplayName("Should create elective course offering when requested")
+    void createElectiveCourseOffering() {
+        CourseOfferingRequest request = new CourseOfferingRequest(1L, 2L, 3L, CourseOfferingType.ELECTIVE);
+        CourseOffering electiveOffering = new CourseOffering(4L, semester, academicGroup, subject, CourseOfferingType.ELECTIVE);
+        when(semesterRepository.findById(1L)).thenReturn(Optional.of(semester));
+        when(academicGroupRepository.findById(2L)).thenReturn(Optional.of(academicGroup));
+        when(subjectRepository.findById(3L)).thenReturn(Optional.of(subject));
+        when(courseOfferingRepository.existsBySemesterSemesterIdAndAcademicGroupGroupIdAndSubjectSubjectId(1L, 2L, 3L))
+                .thenReturn(false);
+        when(courseOfferingRepository.save(any(CourseOffering.class))).thenReturn(electiveOffering);
+        when(courseOfferingRepository.findByIdWithDetails(4L)).thenReturn(Optional.of(electiveOffering));
+        when(academicGroupService.toResponse(academicGroup)).thenReturn(academicGroupResponse);
+
+        CourseOfferingResponse response = courseOfferingService.createCourseOffering(request);
+
+        assertThat(response.type()).isEqualTo(CourseOfferingType.ELECTIVE);
+    }
+
+    @Test
+    @DisplayName("Should update course offering type")
+    void updateCourseOfferingType() {
+        CourseOfferingRequest request = new CourseOfferingRequest(1L, 2L, 3L, CourseOfferingType.ELECTIVE);
+        when(courseOfferingRepository.findByIdWithDetails(4L)).thenReturn(Optional.of(offering));
+        when(semesterRepository.findById(1L)).thenReturn(Optional.of(semester));
+        when(academicGroupRepository.findById(2L)).thenReturn(Optional.of(academicGroup));
+        when(subjectRepository.findById(3L)).thenReturn(Optional.of(subject));
+        when(academicGroupService.toResponse(academicGroup)).thenReturn(academicGroupResponse);
+
+        CourseOfferingResponse response = courseOfferingService.updateCourseOffering(4L, request);
+
+        assertThat(response.type()).isEqualTo(CourseOfferingType.ELECTIVE);
     }
 
     @Test

@@ -29,6 +29,7 @@ public class StudentOnboardingService {
     private final RoleRepository roleRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final AcademicGroupRepository academicGroupRepository;
+    private final StudentElectiveService studentElectiveService;
 
     public StudentOnboardingService(
             CurrentUserService currentUserService,
@@ -36,7 +37,8 @@ public class StudentOnboardingService {
             UserRepository userRepository,
             RoleRepository roleRepository,
             StudentProfileRepository studentProfileRepository,
-            AcademicGroupRepository academicGroupRepository
+            AcademicGroupRepository academicGroupRepository,
+            StudentElectiveService studentElectiveService
     ) {
         this.currentUserService = currentUserService;
         this.currentUserProfileService = currentUserProfileService;
@@ -44,6 +46,7 @@ public class StudentOnboardingService {
         this.roleRepository = roleRepository;
         this.studentProfileRepository = studentProfileRepository;
         this.academicGroupRepository = academicGroupRepository;
+        this.studentElectiveService = studentElectiveService;
     }
 
     @Transactional
@@ -82,7 +85,7 @@ public class StudentOnboardingService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Academic group not found with id: " + request.academicGroupId()
                 ));
-        studentProfileRepository.save(new StudentProfile(
+        StudentProfile studentProfile = studentProfileRepository.save(new StudentProfile(
                 user,
                 studentNumber,
                 departmentFor(academicGroup),
@@ -90,6 +93,7 @@ public class StudentOnboardingService {
                 academicGroup.getYear(),
                 academicGroup
         ));
+        studentElectiveService.enrollForOnboarding(studentProfile, request.electiveCourseOfferingId());
 
         return currentUserProfileService.getCurrentUserProfile();
     }

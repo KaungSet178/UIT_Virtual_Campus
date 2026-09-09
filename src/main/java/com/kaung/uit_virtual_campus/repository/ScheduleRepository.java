@@ -6,10 +6,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalTime;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
@@ -60,11 +61,32 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             JOIN FETCH f.building b
             WHERE sem.semesterId = :semesterId
               AND ag.groupId = :academicGroupId
+              AND co.type = 'MANDATORY'
             ORDER BY s.dayOfWeek ASC, s.startTime ASC, sub.subjectCode ASC
             """)
     List<Schedule> findPersonalTimetable(
             @Param("semesterId") Long semesterId,
             @Param("academicGroupId") Long academicGroupId
+    );
+
+    @Query("""
+            SELECT DISTINCT s FROM Schedule s
+            JOIN FETCH s.courseOffering co
+            JOIN FETCH co.semester sem
+            JOIN FETCH co.academicGroup ag
+            JOIN FETCH co.subject sub
+            JOIN FETCH s.room r
+            JOIN FETCH r.floor f
+            JOIN FETCH f.building b
+            JOIN StudentElectiveEnrollment enrollment ON enrollment.courseOffering = co
+            WHERE enrollment.studentProfile.studentId = :studentProfileId
+              AND sem.semesterId = :semesterId
+              AND co.type = 'ELECTIVE'
+            ORDER BY s.dayOfWeek ASC, s.startTime ASC, s.endTime ASC, sub.subjectCode ASC
+            """)
+    List<Schedule> findStudentElectiveSchedules(
+            @Param("studentProfileId") UUID studentProfileId,
+            @Param("semesterId") Long semesterId
     );
 
     @Query("""
@@ -95,6 +117,45 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("subjectId") Long subjectId,
             @Param("academicGroupId") Long academicGroupId,
             @Param("excludedScheduleId") Long excludedScheduleId
+    );
+
+    @Query("""
+            SELECT COUNT(existing) FROM Schedule existing
+            JOIN existing.courseOffering existingOffering
+            WHERE existingOffering.semester.semesterId = :semesterId
+              AND existingOffering.academicGroup.groupId = :academicGroupId
+              AND existingOffering.type = 'MANDATORY'
+              AND existing.dayOfWeek = :dayOfWeek
+              AND existing.startTime < :requestedEnd
+              AND existing.endTime > :requestedStart
+            """)
+    long countMandatoryTimetableOverlaps(
+            @Param("semesterId") Long semesterId,
+            @Param("academicGroupId") Long academicGroupId,
+            @Param("dayOfWeek") Short dayOfWeek,
+            @Param("requestedStart") LocalTime requestedStart,
+            @Param("requestedEnd") LocalTime requestedEnd
+    );
+
+    @Query("""
+            SELECT COUNT(existing) FROM Schedule existing
+            JOIN existing.courseOffering existingOffering
+            JOIN StudentElectiveEnrollment enrollment ON enrollment.courseOffering = existingOffering
+            WHERE enrollment.studentProfile.studentId = :studentProfileId
+              AND existingOffering.semester.semesterId = :semesterId
+              AND existingOffering.type = 'ELECTIVE'
+              AND existingOffering.offeringId <> :requestedOfferingId
+              AND existing.dayOfWeek = :dayOfWeek
+              AND existing.startTime < :requestedEnd
+              AND existing.endTime > :requestedStart
+            """)
+    long countStudentElectiveOverlaps(
+            @Param("studentProfileId") UUID studentProfileId,
+            @Param("semesterId") Long semesterId,
+            @Param("requestedOfferingId") Long requestedOfferingId,
+            @Param("dayOfWeek") Short dayOfWeek,
+            @Param("requestedStart") LocalTime requestedStart,
+            @Param("requestedEnd") LocalTime requestedEnd
     );
 
     @Query("""

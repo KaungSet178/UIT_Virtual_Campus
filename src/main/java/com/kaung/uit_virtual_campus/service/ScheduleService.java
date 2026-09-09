@@ -24,6 +24,9 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -101,7 +104,18 @@ public class ScheduleService {
         }
 
         Semester activeSemester = activeSemesters.get(0);
-        return scheduleRepository.findPersonalTimetable(activeSemester.getSemesterId(), academicGroup.getGroupId()).stream()
+        Map<Long, Schedule> schedules = new LinkedHashMap<>();
+        scheduleRepository.findPersonalTimetable(activeSemester.getSemesterId(), academicGroup.getGroupId())
+                .forEach(schedule -> schedules.put(schedule.getScheduleId(), schedule));
+        scheduleRepository.findStudentElectiveSchedules(studentProfile.getStudentId(), activeSemester.getSemesterId())
+                .forEach(schedule -> schedules.put(schedule.getScheduleId(), schedule));
+
+        return schedules.values().stream()
+                .sorted(Comparator
+                        .comparing(Schedule::getDayOfWeek)
+                        .thenComparing(Schedule::getStartTime)
+                        .thenComparing(Schedule::getEndTime)
+                        .thenComparing(Schedule::getScheduleId))
                 .map(this::toResponse)
                 .toList();
     }
@@ -196,7 +210,8 @@ public class ScheduleService {
                 schedule.getDayOfWeek(),
                 dayName(schedule.getDayOfWeek()),
                 schedule.getStartTime(),
-                schedule.getEndTime()
+                schedule.getEndTime(),
+                offering.getType()
         );
     }
 

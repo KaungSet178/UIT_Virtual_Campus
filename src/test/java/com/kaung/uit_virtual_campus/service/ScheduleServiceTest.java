@@ -7,6 +7,7 @@ import com.kaung.uit_virtual_campus.entity.AcademicGroup;
 import com.kaung.uit_virtual_campus.entity.AcademicGroupType;
 import com.kaung.uit_virtual_campus.entity.Building;
 import com.kaung.uit_virtual_campus.entity.CourseOffering;
+import com.kaung.uit_virtual_campus.entity.CourseOfferingType;
 import com.kaung.uit_virtual_campus.entity.Floor;
 import com.kaung.uit_virtual_campus.entity.Room;
 import com.kaung.uit_virtual_campus.entity.Schedule;
@@ -169,6 +170,60 @@ class ScheduleServiceTest {
         assertThat(response.get(0).academicGroup().groupId()).isEqualTo(2L);
         assertThat(response.get(0).semesterId()).isEqualTo(1L);
         verify(scheduleRepository).findPersonalTimetable(1L, 2L);
+    }
+
+    @Test
+    @DisplayName("Students in same academic group receive same mandatory schedules and their own electives")
+    void currentStudentTimetableAddsOnlySelectedElectives() {
+        User studentA = user;
+        User studentB = new User(
+                UUID.fromString("22222222-2222-2222-2222-222222222222"),
+                "student-b@uit.example",
+                "Student B",
+                null,
+                null,
+                null,
+                Set.of()
+        );
+        StudentProfile profileA = new StudentProfile(studentA, "UIT-001", "CS", "Software Engineering", (short) 3, academicGroup);
+        StudentProfile profileB = new StudentProfile(studentB, "UIT-002", "CS", "Software Engineering", (short) 3, academicGroup);
+        Subject electiveSubjectA = new Subject(30L, "CST-4105", "Java Keystone", null);
+        Subject electiveSubjectB = new Subject(31L, "CST-4408", "Cybersecurity", null);
+        CourseOffering electiveOfferingA = new CourseOffering(40L, semester, academicGroup, electiveSubjectA, CourseOfferingType.ELECTIVE);
+        CourseOffering electiveOfferingB = new CourseOffering(41L, semester, academicGroup, electiveSubjectB, CourseOfferingType.ELECTIVE);
+        Schedule electiveA = new Schedule(50L, electiveOfferingA, room, (short) 2, LocalTime.of(13, 0), LocalTime.of(14, 0));
+        Schedule electiveB = new Schedule(51L, electiveOfferingB, room, (short) 3, LocalTime.of(13, 0), LocalTime.of(14, 0));
+
+        when(semesterRepository.findByStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByStartDateAscSemesterIdAsc(
+                LocalDate.of(2026, 9, 1),
+                LocalDate.of(2026, 9, 1)
+        )).thenReturn(List.of(semester));
+        when(scheduleRepository.findPersonalTimetable(1L, 2L)).thenReturn(List.of(schedule));
+        when(academicGroupService.toResponse(academicGroup)).thenReturn(academicGroupResponse);
+
+        when(currentUserService.getCurrentUser()).thenReturn(studentA);
+        when(studentProfileRepository.findWithUserByStudentId(studentA.getUserId())).thenReturn(Optional.of(profileA));
+        when(scheduleRepository.findStudentElectiveSchedules(profileA.getStudentId(), 1L)).thenReturn(List.of(electiveA));
+
+        List<ScheduleResponse> responseA = scheduleService.getCurrentStudentTimetable();
+
+        assertThat(responseA).extracting(ScheduleResponse::subjectCode)
+                .containsExactly("CS101", "CST-4105");
+        assertThat(responseA).extracting(ScheduleResponse::subjectCode)
+                .doesNotContain("CST-4408");
+        assertThat(responseA.get(0).courseType()).isEqualTo(CourseOfferingType.MANDATORY);
+        assertThat(responseA.get(1).courseType()).isEqualTo(CourseOfferingType.ELECTIVE);
+
+        when(currentUserService.getCurrentUser()).thenReturn(studentB);
+        when(studentProfileRepository.findWithUserByStudentId(studentB.getUserId())).thenReturn(Optional.of(profileB));
+        when(scheduleRepository.findStudentElectiveSchedules(profileB.getStudentId(), 1L)).thenReturn(List.of(electiveB));
+
+        List<ScheduleResponse> responseB = scheduleService.getCurrentStudentTimetable();
+
+        assertThat(responseB).extracting(ScheduleResponse::subjectCode)
+                .containsExactly("CS101", "CST-4408");
+        assertThat(responseB).extracting(ScheduleResponse::subjectCode)
+                .doesNotContain("CST-4105");
     }
 
     @Test
