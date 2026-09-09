@@ -9,6 +9,8 @@ import com.kaung.uit_virtual_campus.entity.Role;
 import com.kaung.uit_virtual_campus.entity.User;
 import com.kaung.uit_virtual_campus.exception.ResourceNotFoundException;
 import com.kaung.uit_virtual_campus.repository.EventRepository;
+import com.kaung.uit_virtual_campus.repository.ClubMembershipRepository;
+import com.kaung.uit_virtual_campus.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,15 @@ class EventServiceTest {
     @Mock
     private CurrentUserService currentUserService;
 
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ClubMembershipRepository clubMembershipRepository;
+
     private EventService eventService;
     private User admin;
     private User leader;
@@ -65,7 +76,10 @@ class EventServiceTest {
                 currentUserService,
                 authorizationService,
                 new EventMapper(),
-                Clock.fixed(Instant.parse("2026-08-31T08:00:00Z"), ZoneOffset.UTC)
+                Clock.fixed(Instant.parse("2026-08-31T08:00:00Z"), ZoneOffset.UTC),
+                notificationService,
+                userRepository,
+                clubMembershipRepository
         );
         Role adminRole = new Role((short) 1, "ADMIN");
         Role leaderRole = new Role((short) 2, "CLUB_LEADER");

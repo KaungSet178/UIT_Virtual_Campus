@@ -43,6 +43,9 @@ class ClubMembershipServiceTest {
     @Mock
     private CurrentUserService currentUserService;
 
+    @Mock
+    private NotificationService notificationService;
+
     private ClubMembershipService membershipService;
     private User student;
     private User leader;
@@ -59,7 +62,8 @@ class ClubMembershipServiceTest {
                 studentProfileRepository,
                 currentUserService,
                 auth,
-                mapper
+                mapper,
+                notificationService
         );
         Role studentRole = new Role((short) 1, "STUDENT");
         Role leaderRole = new Role((short) 2, "CLUB_LEADER");

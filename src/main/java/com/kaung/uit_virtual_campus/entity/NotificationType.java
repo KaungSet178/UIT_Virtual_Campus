@@ -1,0 +1,13 @@
+package com.kaung.uit_virtual_campus.entity;
+
+public enum NotificationType {
+    RESERVATION_SUBMITTED,
+    RESERVATION_APPROVED,
+    RESERVATION_REJECTED,
+    RESERVATION_CANCELLED,
+    CLUB_MEMBER_JOINED,
+    CLUB_MEMBER_LEFT,
+    EVENT_CREATED,
+    EVENT_UPDATED,
+    EVENT_CANCELLED
+}

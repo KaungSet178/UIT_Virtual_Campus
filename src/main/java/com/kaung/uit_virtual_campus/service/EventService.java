@@ -4,17 +4,25 @@ import com.kaung.uit_virtual_campus.dto.EventCreateRequest;
 import com.kaung.uit_virtual_campus.dto.EventResponse;
 import com.kaung.uit_virtual_campus.dto.EventUpdateRequest;
 import com.kaung.uit_virtual_campus.entity.Club;
+import com.kaung.uit_virtual_campus.entity.ClubMembershipStatus;
 import com.kaung.uit_virtual_campus.entity.Event;
+import com.kaung.uit_virtual_campus.entity.NotificationEntityType;
+import com.kaung.uit_virtual_campus.entity.NotificationType;
 import com.kaung.uit_virtual_campus.entity.User;
 import com.kaung.uit_virtual_campus.exception.ResourceNotFoundException;
+import com.kaung.uit_virtual_campus.repository.ClubMembershipRepository;
 import com.kaung.uit_virtual_campus.repository.EventRepository;
+import com.kaung.uit_virtual_campus.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @Transactional(readOnly = true)
@@ -28,6 +36,9 @@ public class EventService {
     private final ClubAuthorizationService authorizationService;
     private final EventMapper eventMapper;
     private final Clock clock;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
+    private final ClubMembershipRepository clubMembershipRepository;
 
     public EventService(
             EventRepository eventRepository,
@@ -35,7 +46,10 @@ public class EventService {
             CurrentUserService currentUserService,
             ClubAuthorizationService authorizationService,
             EventMapper eventMapper,
-            Clock clock
+            Clock clock,
+            NotificationService notificationService,
+            UserRepository userRepository,
+            ClubMembershipRepository clubMembershipRepository
     ) {
         this.eventRepository = eventRepository;
         this.clubService = clubService;
@@ -43,6 +57,9 @@ public class EventService {
         this.authorizationService = authorizationService;
         this.eventMapper = eventMapper;
         this.clock = clock;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
+        this.clubMembershipRepository = clubMembershipRepository;
     }
 
     public List<EventResponse> listEvents(Long clubId, OffsetDateTime from, OffsetDateTime to, String location) {
@@ -81,6 +98,7 @@ public class EventService {
                 normalizeLocation(request.location()),
                 trimToNull(request.imageUrl())
         ));
+        notifyEventAudience(saved, NotificationType.EVENT_CREATED, eventCreatedTitle(saved), eventCreatedMessage(saved));
         return eventMapper.toResponse(saved);
     }
 
@@ -90,6 +108,7 @@ public class EventService {
         User currentUser = currentUserService.getCurrentUser();
         Event event = findEventWithDetails(eventId);
         requireEventManager(currentUser, event);
+        boolean meaningfulChange = hasMeaningfulChange(event, request);
 
         event.updateDetails(
                 normalizeRequired(request.title()),
@@ -99,6 +118,10 @@ public class EventService {
                 normalizeLocation(request.location()),
                 trimToNull(request.imageUrl())
         );
+        if (meaningfulChange) {
+            notifyEventAudience(event, NotificationType.EVENT_UPDATED, "Event Updated",
+                    event.getTitle() + " has been updated.");
+        }
         return eventMapper.toResponse(event);
     }
 
@@ -107,6 +130,8 @@ public class EventService {
         User currentUser = currentUserService.getCurrentUser();
         Event event = findEventWithDetails(eventId);
         requireEventManager(currentUser, event);
+        notifyEventAudience(event, NotificationType.EVENT_CANCELLED, "Event Cancelled",
+                event.getTitle() + " has been cancelled.");
         eventRepository.delete(event);
     }
 
@@ -188,5 +213,52 @@ public class EventService {
             return null;
         }
         return value.trim();
+    }
+
+    private void notifyEventAudience(Event event, NotificationType type, String title, String message) {
+        notificationService.notifyUsers(
+                eventAudienceUserIds(event),
+                type,
+                title,
+                message,
+                NotificationEntityType.EVENT,
+                event.getEventId()
+        );
+    }
+
+    private List<UUID> eventAudienceUserIds(Event event) {
+        Club club = event.getClub();
+        if (club == null) {
+            return userRepository.findUserIdsByRoleName("STUDENT");
+        }
+        return clubMembershipRepository.findStudentUserIdsByClubIdAndStatus(
+                club.getClubId(),
+                ClubMembershipStatus.ACTIVE
+        );
+    }
+
+    private boolean hasMeaningfulChange(Event event, EventUpdateRequest request) {
+        return !Objects.equals(event.getTitle(), normalizeRequired(request.title()))
+                || !Objects.equals(event.getStartDatetime(), request.startDatetime())
+                || !Objects.equals(event.getEndDatetime(), request.endDatetime())
+                || !Objects.equals(event.getLocation(), normalizeLocation(request.location()));
+    }
+
+    private String eventCreatedTitle(Event event) {
+        Club club = event.getClub();
+        return club == null ? "New University Event" : "New " + club.getClubName() + " Event";
+    }
+
+    private String eventCreatedMessage(Event event) {
+        Club club = event.getClub();
+        if (club == null) {
+            String message = event.getTitle() + " has been scheduled for "
+                    + event.getStartDatetime().format(DateTimeFormatter.ofPattern("MMM d"));
+            if (event.getLocation() != null) {
+                message += " at " + event.getLocation();
+            }
+            return message + ".";
+        }
+        return club.getClubName() + " has scheduled " + event.getTitle() + ".";
     }
 }

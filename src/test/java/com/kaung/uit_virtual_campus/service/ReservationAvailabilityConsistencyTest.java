@@ -19,6 +19,7 @@ import com.kaung.uit_virtual_campus.exception.ConflictException;
 import com.kaung.uit_virtual_campus.repository.ReservationRepository;
 import com.kaung.uit_virtual_campus.repository.RoomRepository;
 import com.kaung.uit_virtual_campus.repository.ScheduleRepository;
+import com.kaung.uit_virtual_campus.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,21 +53,28 @@ class ReservationAvailabilityConsistencyTest {
     @Autowired
     private ReservationRepository reservationRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private RoomAvailabilityService availabilityService;
     private ReservationService reservationService;
     private CurrentUserService currentUserService;
+    private NotificationService notificationService;
     private User student;
     private Room room214;
 
     @BeforeEach
     void setUp() {
         currentUserService = mock(CurrentUserService.class);
+        notificationService = mock(NotificationService.class);
         availabilityService = new RoomAvailabilityService(roomRepository, scheduleRepository, reservationRepository);
         reservationService = new ReservationService(
                 reservationRepository,
                 roomRepository,
                 currentUserService,
-                availabilityService
+                availabilityService,
+                notificationService,
+                userRepository
         );
 
         Building building = entityManager.persist(new Building("Building 2", "Academic"));

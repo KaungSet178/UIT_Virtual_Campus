@@ -6,6 +6,8 @@ import com.kaung.uit_virtual_campus.dto.MyClubResponse;
 import com.kaung.uit_virtual_campus.entity.Club;
 import com.kaung.uit_virtual_campus.entity.ClubMembership;
 import com.kaung.uit_virtual_campus.entity.ClubMembershipStatus;
+import com.kaung.uit_virtual_campus.entity.NotificationEntityType;
+import com.kaung.uit_virtual_campus.entity.NotificationType;
 import com.kaung.uit_virtual_campus.entity.StudentProfile;
 import com.kaung.uit_virtual_campus.entity.User;
 import com.kaung.uit_virtual_campus.exception.ConflictException;
@@ -28,6 +30,7 @@ public class ClubMembershipService {
     private final CurrentUserService currentUserService;
     private final ClubAuthorizationService authorizationService;
     private final ClubMapper clubMapper;
+    private final NotificationService notificationService;
 
     public ClubMembershipService(
             ClubService clubService,
@@ -35,7 +38,8 @@ public class ClubMembershipService {
             StudentProfileRepository studentProfileRepository,
             CurrentUserService currentUserService,
             ClubAuthorizationService authorizationService,
-            ClubMapper clubMapper
+            ClubMapper clubMapper,
+            NotificationService notificationService
     ) {
         this.clubService = clubService;
         this.clubMembershipRepository = clubMembershipRepository;
@@ -43,6 +47,7 @@ public class ClubMembershipService {
         this.currentUserService = currentUserService;
         this.authorizationService = authorizationService;
         this.clubMapper = clubMapper;
+        this.notificationService = notificationService;
     }
 
     public List<ClubMemberResponse> getActiveMembers(Long clubId) {
@@ -80,6 +85,8 @@ public class ClubMembershipService {
                 .map(existing -> reactivateMembership(existing, clubId))
                 .orElseGet(() -> clubMembershipRepository.save(new ClubMembership(club, studentProfile)));
 
+        notifyLeader(club, NotificationType.CLUB_MEMBER_JOINED, "New Club Member",
+                displayName(currentUser) + " joined " + club.getClubName() + ".");
         return clubMapper.toMyClubResponse(membership, currentUser.getUserId());
     }
 
@@ -104,6 +111,8 @@ public class ClubMembershipService {
         }
 
         membership.leave();
+        notifyLeader(club, NotificationType.CLUB_MEMBER_LEFT, "Club Member Left",
+                displayName(currentUser) + " left " + club.getClubName() + ".");
         return clubMapper.toMyClubResponse(membership, currentUser.getUserId());
     }
 
@@ -121,5 +130,20 @@ public class ClubMembershipService {
     private StudentProfile getStudentProfile(UUID studentId) {
         return studentProfileRepository.findWithUserByStudentId(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student profile not found for current user."));
+    }
+
+    private void notifyLeader(Club club, NotificationType type, String title, String message) {
+        notificationService.notifyUser(
+                club.getLeader().getUserId(),
+                type,
+                title,
+                message,
+                NotificationEntityType.CLUB,
+                club.getClubId()
+        );
+    }
+
+    private String displayName(User user) {
+        return user.getFullName() == null || user.getFullName().isBlank() ? user.getEmail() : user.getFullName();
     }
 }

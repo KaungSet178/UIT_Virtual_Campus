@@ -73,4 +73,17 @@ public interface ClubMembershipRepository extends JpaRepository<ClubMembership, 
     );
 
     long countByClubClubIdAndStatus(Long clubId, ClubMembershipStatus status);
+
+    @Query("""
+            SELECT DISTINCT u.userId FROM ClubMembership m
+            JOIN m.club c
+            JOIN m.student sp
+            JOIN sp.user u
+            WHERE c.clubId = :clubId
+              AND m.status = :status
+            """)
+    List<UUID> findStudentUserIdsByClubIdAndStatus(
+            @Param("clubId") Long clubId,
+            @Param("status") ClubMembershipStatus status
+    );
 }

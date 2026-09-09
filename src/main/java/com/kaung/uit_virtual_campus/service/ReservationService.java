@@ -2,6 +2,8 @@ package com.kaung.uit_virtual_campus.service;
 
 import com.kaung.uit_virtual_campus.dto.ReservationCreateRequest;
 import com.kaung.uit_virtual_campus.dto.ReservationResponse;
+import com.kaung.uit_virtual_campus.entity.NotificationEntityType;
+import com.kaung.uit_virtual_campus.entity.NotificationType;
 import com.kaung.uit_virtual_campus.entity.Reservation;
 import com.kaung.uit_virtual_campus.entity.ReservationStatus;
 import com.kaung.uit_virtual_campus.entity.Room;
@@ -10,11 +12,13 @@ import com.kaung.uit_virtual_campus.exception.ConflictException;
 import com.kaung.uit_virtual_campus.exception.ResourceNotFoundException;
 import com.kaung.uit_virtual_campus.repository.ReservationRepository;
 import com.kaung.uit_virtual_campus.repository.RoomRepository;
+import com.kaung.uit_virtual_campus.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,17 +30,23 @@ public class ReservationService {
     private final RoomRepository roomRepository;
     private final CurrentUserService currentUserService;
     private final RoomAvailabilityService availabilityService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     public ReservationService(
             ReservationRepository reservationRepository,
             RoomRepository roomRepository,
             CurrentUserService currentUserService,
-            RoomAvailabilityService availabilityService
+            RoomAvailabilityService availabilityService,
+            NotificationService notificationService,
+            UserRepository userRepository
     ) {
         this.reservationRepository = reservationRepository;
         this.roomRepository = roomRepository;
         this.currentUserService = currentUserService;
         this.availabilityService = availabilityService;
+        this.notificationService = notificationService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -60,6 +70,12 @@ public class ReservationService {
                 request.endTime(),
                 request.purpose().trim()
         ));
+        notifyAdmins(
+                NotificationType.RESERVATION_SUBMITTED,
+                "New Reservation Request",
+                displayName(user) + " requested " + roomLabel(room) + " for " + reservationSlot(saved) + ".",
+                saved.getReservationId()
+        );
         return getReservationByIdForCurrentUser(saved.getReservationId());
     }
 
@@ -107,6 +123,15 @@ public class ReservationService {
                 reservation.getReservationId()
         );
         reservation.approve(admin);
+        notificationService.notifyUser(
+                reservation.getUser().getUserId(),
+                NotificationType.RESERVATION_APPROVED,
+                "Reservation Approved",
+                "Your reservation for " + roomLabel(reservation.getRoom()) + " on " + reservationSlot(reservation)
+                        + " has been approved.",
+                NotificationEntityType.RESERVATION,
+                reservation.getReservationId()
+        );
         return toResponse(reservation);
     }
 
@@ -117,6 +142,15 @@ public class ReservationService {
             throw new ConflictException("Only pending reservations can be rejected.");
         }
         reservation.reject();
+        notificationService.notifyUser(
+                reservation.getUser().getUserId(),
+                NotificationType.RESERVATION_REJECTED,
+                "Reservation Rejected",
+                "Your reservation for " + roomLabel(reservation.getRoom()) + " on " + reservationSlot(reservation)
+                        + " has been rejected.",
+                NotificationEntityType.RESERVATION,
+                reservation.getReservationId()
+        );
         return toResponse(reservation);
     }
 
@@ -135,6 +169,13 @@ public class ReservationService {
             lockRoom(reservation.getRoom().getRoomId());
         }
         reservation.cancel();
+        notifyAdmins(
+                NotificationType.RESERVATION_CANCELLED,
+                "Reservation Cancelled",
+                displayName(reservation.getUser()) + " cancelled " + roomLabel(reservation.getRoom())
+                        + " for " + reservationSlot(reservation) + ".",
+                reservation.getReservationId()
+        );
         return toResponse(reservation);
     }
 
@@ -155,6 +196,36 @@ public class ReservationService {
     private boolean hasRole(User user, String roleName) {
         return user.getRoles().stream()
                 .anyMatch(role -> role.getRoleName().equalsIgnoreCase(roleName));
+    }
+
+    private void notifyAdmins(NotificationType type, String title, String message, Long reservationId) {
+        notificationService.notifyUsers(
+                userRepository.findUserIdsByRoleName("ADMIN"),
+                type,
+                title,
+                message,
+                NotificationEntityType.RESERVATION,
+                reservationId
+        );
+    }
+
+    private String reservationSlot(Reservation reservation) {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM d");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        return reservation.getReservationDate().format(dateFormatter) + ", "
+                + reservation.getStartTime().format(timeFormatter) + "-"
+                + reservation.getEndTime().format(timeFormatter);
+    }
+
+    private String roomLabel(Room room) {
+        if (room.getRoomName() == null || room.getRoomName().isBlank()) {
+            return "Room " + room.getRoomNumber();
+        }
+        return room.getRoomName();
+    }
+
+    private String displayName(User user) {
+        return user.getFullName() == null || user.getFullName().isBlank() ? user.getEmail() : user.getFullName();
     }
 
     private ReservationResponse toResponse(Reservation reservation) {

@@ -12,6 +12,7 @@ import com.kaung.uit_virtual_campus.entity.User;
 import com.kaung.uit_virtual_campus.exception.ConflictException;
 import com.kaung.uit_virtual_campus.repository.ReservationRepository;
 import com.kaung.uit_virtual_campus.repository.RoomRepository;
+import com.kaung.uit_virtual_campus.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,12 @@ class ReservationServiceTest {
     @Mock
     private RoomAvailabilityService availabilityService;
 
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private UserRepository userRepository;
+
     private ReservationService reservationService;
     private User user;
     private User admin;
@@ -60,7 +67,9 @@ class ReservationServiceTest {
                 reservationRepository,
                 roomRepository,
                 currentUserService,
-                availabilityService
+                availabilityService,
+                notificationService,
+                userRepository
         );
         user = new User(UUID.randomUUID(), "user@example.com", "User", null, LocalDateTime.now(), LocalDateTime.now(), Set.of());
         admin = new User(UUID.randomUUID(), "admin@example.com", "Admin", null, LocalDateTime.now(), LocalDateTime.now(), Set.of(new Role((short) 3, "ADMIN")));
