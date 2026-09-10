@@ -116,8 +116,13 @@ public class RoomAvailabilityService {
         if (startTime == null || endTime == null) {
             throw new IllegalArgumentException("startTime and endTime are required.");
         }
-        if (!endTime.isAfter(startTime)) {
-            throw new IllegalArgumentException("endTime must be after startTime.");
+        // Equal start/end is a deliberate, supported zero-width "is this exact
+        // instant covered" query (see getCurrentOccupancy's own comment above,
+        // and the per-room Info panel's occupancy-reason fetch, both of which
+        // pass startTime == endTime == now) — only reject a genuinely backwards
+        // range.
+        if (endTime.isBefore(startTime)) {
+            throw new IllegalArgumentException("endTime must not be before startTime.");
         }
     }
 

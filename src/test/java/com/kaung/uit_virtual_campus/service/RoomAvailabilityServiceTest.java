@@ -63,8 +63,8 @@ class RoomAvailabilityServiceTest {
     }
 
     @Test
-    @DisplayName("Availability response redacts approved reservation owner and purpose")
-    void availabilityRedactsReservationDetails() {
+    @DisplayName("Availability response includes the reservation purpose but redacts the owner's identity")
+    void availabilityIncludesPurposeButRedactsOwner() {
         Reservation reservation = approvedReservation();
         when(roomRepository.existsById(10L)).thenReturn(true);
         when(scheduleRepository.findOfficialScheduleConflicts(10L, (short) 1, date, start, end)).thenReturn(List.of());
@@ -75,8 +75,11 @@ class RoomAvailabilityServiceTest {
         assertThat(response.available()).isFalse();
         assertThat(response.conflicts()).hasSize(1);
         assertThat(response.conflicts().get(0).type()).isEqualTo("APPROVED_RESERVATION");
-        assertThat(response.conflicts().get(0).description()).isEqualTo("Approved reservation");
-        assertThat(response.conflicts().get(0).description()).doesNotContain("Secret", "owner@example.com");
+        // Purpose is deliberately surfaced (see feature_map_room_filter memory —
+        // the map's Info panel shows *why* a room is occupied), but who booked
+        // it stays private: no owner name or email in the description.
+        assertThat(response.conflicts().get(0).description()).isEqualTo("Reservation: Secret purpose");
+        assertThat(response.conflicts().get(0).description()).doesNotContain("owner@example.com", "Secret Owner");
     }
 
     @Test
