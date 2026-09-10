@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -54,7 +55,8 @@ class RoomAvailabilityServiceTest {
 
     @BeforeEach
     void setUp() {
-        availabilityService = new RoomAvailabilityService(roomRepository, scheduleRepository, reservationRepository);
+        availabilityService =
+                new RoomAvailabilityService(roomRepository, scheduleRepository, reservationRepository, Clock.systemUTC());
         date = LocalDate.of(2026, 8, 24);
         start = LocalTime.of(9, 30);
         end = LocalTime.of(10, 30);

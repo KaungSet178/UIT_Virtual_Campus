@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -67,7 +68,8 @@ class ReservationAvailabilityConsistencyTest {
     void setUp() {
         currentUserService = mock(CurrentUserService.class);
         notificationService = mock(NotificationService.class);
-        availabilityService = new RoomAvailabilityService(roomRepository, scheduleRepository, reservationRepository);
+        availabilityService =
+                new RoomAvailabilityService(roomRepository, scheduleRepository, reservationRepository, Clock.systemUTC());
         reservationService = new ReservationService(
                 reservationRepository,
                 roomRepository,
