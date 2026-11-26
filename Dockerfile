@@ -22,5 +22,6 @@ USER appuser
 EXPOSE 8080
 
 # Stay within container memory limits (e.g., Render 512MB free/starter plans)
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"
+# Keep TLS ClientHello compact (avoid oversized post-quantum key shares) and use non-blocking entropy
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -Djdk.tls.namedGroups=x25519,secp256r1,secp384r1 -Djava.security.egd=file:/dev/urandom"
 ENTRYPOINT ["java", "-jar", "app.jar"]
