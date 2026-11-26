@@ -142,6 +142,62 @@ class StudentElectiveServiceTest {
     }
 
     @Test
+    @DisplayName("Signup availability for Year 3 CS returns only CS department electives")
+    void signupAvailabilityReturnsYearThreeCsDepartmentElectives() {
+        AcademicGroup csDepartment = new AcademicGroup(31L, (short) 3, AcademicGroupType.DEPARTMENT, null, "CS", null);
+        CourseOffering csElective = new CourseOffering(
+                41L,
+                activeSemester,
+                csDepartment,
+                new Subject(51L, "CST-3101", "CS Elective", null),
+                CourseOfferingType.ELECTIVE
+        );
+        when(semesterRepository.findByStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByStartDateAscSemesterIdAsc(
+                LocalDate.of(2026, 9, 1),
+                LocalDate.of(2026, 9, 1)
+        )).thenReturn(List.of(activeSemester));
+        when(courseOfferingRepository.findAvailableElectives(1L, 31L)).thenReturn(List.of(csElective));
+        when(academicGroupService.toResponse(csDepartment))
+                .thenReturn(new AcademicGroupResponse(31L, (short) 3, AcademicGroupType.DEPARTMENT, null, "CS", null));
+
+        List<ElectiveCourseOfferingResponse> response = electiveService.getAvailableElectives(31L);
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).academicGroup().groupType()).isEqualTo(AcademicGroupType.DEPARTMENT);
+        assertThat(response.get(0).academicGroup().department()).isEqualTo("CS");
+        assertThat(response.get(0).academicGroup().major()).isNull();
+        verify(courseOfferingRepository).findAvailableElectives(1L, 31L);
+    }
+
+    @Test
+    @DisplayName("Signup availability for Year 3 CT returns only CT department electives")
+    void signupAvailabilityReturnsYearThreeCtDepartmentElectives() {
+        AcademicGroup ctDepartment = new AcademicGroup(32L, (short) 3, AcademicGroupType.DEPARTMENT, null, "CT", null);
+        CourseOffering ctElective = new CourseOffering(
+                42L,
+                activeSemester,
+                ctDepartment,
+                new Subject(52L, "CT-3101", "CT Elective", null),
+                CourseOfferingType.ELECTIVE
+        );
+        when(semesterRepository.findByStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByStartDateAscSemesterIdAsc(
+                LocalDate.of(2026, 9, 1),
+                LocalDate.of(2026, 9, 1)
+        )).thenReturn(List.of(activeSemester));
+        when(courseOfferingRepository.findAvailableElectives(1L, 32L)).thenReturn(List.of(ctElective));
+        when(academicGroupService.toResponse(ctDepartment))
+                .thenReturn(new AcademicGroupResponse(32L, (short) 3, AcademicGroupType.DEPARTMENT, null, "CT", null));
+
+        List<ElectiveCourseOfferingResponse> response = electiveService.getAvailableElectives(32L);
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).academicGroup().groupType()).isEqualTo(AcademicGroupType.DEPARTMENT);
+        assertThat(response.get(0).academicGroup().department()).isEqualTo("CT");
+        assertThat(response.get(0).academicGroup().major()).isNull();
+        verify(courseOfferingRepository).findAvailableElectives(1L, 32L);
+    }
+
+    @Test
     @DisplayName("Student can enroll in a valid elective")
     void studentCanEnrollInValidElective() {
         stubActiveSemester();

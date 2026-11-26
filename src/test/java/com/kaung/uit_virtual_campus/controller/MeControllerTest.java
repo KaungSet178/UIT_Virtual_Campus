@@ -83,8 +83,8 @@ class MeControllerTest {
                         "UIT-001",
                         "CS",
                         "Software Engineering",
-                        (short) 3,
-                        new AcademicGroupResponse(5L, (short) 3, AcademicGroupType.MAJOR, null, "CS", "SE")
+                        (short) 4,
+                        new AcademicGroupResponse(5L, (short) 4, AcademicGroupType.MAJOR, null, "CS", "SE")
                 ),
                 null
         ));
@@ -101,7 +101,7 @@ class MeControllerTest {
                 .andExpect(jsonPath("$.studentProfile.studentNumber").value("UIT-001"))
                 .andExpect(jsonPath("$.studentProfile.department").value("CS"))
                 .andExpect(jsonPath("$.studentProfile.programme").value("Software Engineering"))
-                .andExpect(jsonPath("$.studentProfile.year").value(3))
+                .andExpect(jsonPath("$.studentProfile.year").value(4))
                 .andExpect(jsonPath("$.studentProfile.academicGroup.groupId").value(5))
                 .andExpect(jsonPath("$.studentProfile.academicGroup.groupType").value("MAJOR"))
                 .andExpect(jsonPath("$.studentProfile.academicGroup.department").value("CS"))

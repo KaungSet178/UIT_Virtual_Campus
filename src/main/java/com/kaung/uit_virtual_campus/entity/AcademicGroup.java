@@ -33,6 +33,8 @@ import java.util.Objects;
         AND (
             (group_type = 'SECTION' AND section_name IS NOT NULL AND department IS NULL AND major IS NULL)
             OR
+            (group_type = 'DEPARTMENT' AND section_name IS NULL AND department IS NOT NULL AND major IS NULL)
+            OR
             (group_type = 'MAJOR' AND section_name IS NULL AND department IS NOT NULL AND major IS NOT NULL)
         )
         """)
@@ -115,6 +117,9 @@ public class AcademicGroup {
     public String getDisplayName() {
         if (groupType == AcademicGroupType.SECTION) {
             return "Year " + year + " Section " + sectionName;
+        }
+        if (groupType == AcademicGroupType.DEPARTMENT) {
+            return "Year " + year + " " + department;
         }
         return "Year " + year + " " + department + " " + major;
     }

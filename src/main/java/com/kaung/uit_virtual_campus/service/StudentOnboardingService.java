@@ -104,7 +104,7 @@ public class StudentOnboardingService {
     }
 
     private String departmentFor(AcademicGroup academicGroup) {
-        return academicGroup.getGroupType() == AcademicGroupType.MAJOR ? academicGroup.getDepartment() : null;
+        return academicGroup.getGroupType() == AcademicGroupType.SECTION ? null : academicGroup.getDepartment();
     }
 
     private String programmeFor(AcademicGroup academicGroup) {

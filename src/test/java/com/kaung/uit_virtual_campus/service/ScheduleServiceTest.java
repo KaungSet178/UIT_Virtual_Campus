@@ -104,8 +104,8 @@ class ScheduleServiceTest {
                 Set.of()
         );
         semester = new Semester(1L, "2026 Semester 2", LocalDate.of(2026, 6, 15), LocalDate.of(2026, 10, 30));
-        academicGroup = new AcademicGroup(2L, (short) 3, AcademicGroupType.MAJOR, null, "CS", "SE");
-        academicGroupResponse = new AcademicGroupResponse(2L, (short) 3, AcademicGroupType.MAJOR, null, "CS", "SE");
+        academicGroup = new AcademicGroup(2L, (short) 4, AcademicGroupType.MAJOR, null, "CS", "SE");
+        academicGroupResponse = new AcademicGroupResponse(2L, (short) 4, AcademicGroupType.MAJOR, null, "CS", "SE");
         Subject subject = new Subject(3L, "CS101", "Programming Fundamentals", "Intro");
         offering = new CourseOffering(4L, semester, academicGroup, subject);
         Building building = new Building(1L, "Building 1", "Main");
@@ -154,7 +154,7 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("Current student timetable uses assigned academic group and active semester")
     void currentStudentTimetableUsesAssignedAcademicGroupAndActiveSemester() {
-        StudentProfile studentProfile = new StudentProfile(user, "UIT-001", "CS", "Software Engineering", (short) 3, academicGroup);
+        StudentProfile studentProfile = new StudentProfile(user, "UIT-001", "CS", "Software Engineering", (short) 4, academicGroup);
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(studentProfileRepository.findWithUserByStudentId(user.getUserId())).thenReturn(Optional.of(studentProfile));
         when(semesterRepository.findByStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByStartDateAscSemesterIdAsc(
@@ -185,8 +185,8 @@ class ScheduleServiceTest {
                 null,
                 Set.of()
         );
-        StudentProfile profileA = new StudentProfile(studentA, "UIT-001", "CS", "Software Engineering", (short) 3, academicGroup);
-        StudentProfile profileB = new StudentProfile(studentB, "UIT-002", "CS", "Software Engineering", (short) 3, academicGroup);
+        StudentProfile profileA = new StudentProfile(studentA, "UIT-001", "CS", "Software Engineering", (short) 4, academicGroup);
+        StudentProfile profileB = new StudentProfile(studentB, "UIT-002", "CS", "Software Engineering", (short) 4, academicGroup);
         Subject electiveSubjectA = new Subject(30L, "CST-4105", "Java Keystone", null);
         Subject electiveSubjectB = new Subject(31L, "CST-4408", "Cybersecurity", null);
         CourseOffering electiveOfferingA = new CourseOffering(40L, semester, academicGroup, electiveSubjectA, CourseOfferingType.ELECTIVE);
@@ -264,7 +264,7 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("Current student timetable rejects mismatched major department")
     void currentStudentTimetableRejectsMismatchedMajorDepartment() {
-        StudentProfile studentProfile = new StudentProfile(user, "UIT-001", "CT", "Software Engineering", (short) 3, academicGroup);
+        StudentProfile studentProfile = new StudentProfile(user, "UIT-001", "CT", "Software Engineering", (short) 4, academicGroup);
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(studentProfileRepository.findWithUserByStudentId(user.getUserId())).thenReturn(Optional.of(studentProfile));
 
@@ -276,7 +276,7 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("Current student timetable returns empty list when no semester is active")
     void currentStudentTimetableReturnsEmptyWithoutActiveSemester() {
-        StudentProfile studentProfile = new StudentProfile(user, "UIT-001", "CS", "Software Engineering", (short) 3, academicGroup);
+        StudentProfile studentProfile = new StudentProfile(user, "UIT-001", "CS", "Software Engineering", (short) 4, academicGroup);
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(studentProfileRepository.findWithUserByStudentId(user.getUserId())).thenReturn(Optional.of(studentProfile));
         when(semesterRepository.findByStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByStartDateAscSemesterIdAsc(
@@ -290,7 +290,7 @@ class ScheduleServiceTest {
     @Test
     @DisplayName("Current student timetable rejects multiple active semesters")
     void currentStudentTimetableRejectsMultipleActiveSemesters() {
-        StudentProfile studentProfile = new StudentProfile(user, "UIT-001", "CS", "Software Engineering", (short) 3, academicGroup);
+        StudentProfile studentProfile = new StudentProfile(user, "UIT-001", "CS", "Software Engineering", (short) 4, academicGroup);
         Semester otherActive = new Semester(2L, "Overlap", LocalDate.of(2026, 8, 1), LocalDate.of(2026, 9, 30));
         when(currentUserService.getCurrentUser()).thenReturn(user);
         when(studentProfileRepository.findWithUserByStudentId(user.getUserId())).thenReturn(Optional.of(studentProfile));

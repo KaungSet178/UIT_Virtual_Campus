@@ -48,13 +48,13 @@ class CurrentUserProfileServiceTest {
                 LocalDateTime.now(),
                 Set.of(new Role((short) 2, "STUDENT"))
         );
-        AcademicGroup academicGroup = new AcademicGroup(5L, (short) 3, AcademicGroupType.MAJOR, null, "CS", "SE");
+        AcademicGroup academicGroup = new AcademicGroup(5L, (short) 4, AcademicGroupType.MAJOR, null, "CS", "SE");
         StudentProfile studentProfile = new StudentProfile(
                 user,
                 "UIT-001",
                 "CS",
                 "Software Engineering",
-                (short) 3,
+                (short) 4,
                 academicGroup
         );
         user.completeProfile("Student User", "+95 9 123 456 789");
@@ -76,7 +76,7 @@ class CurrentUserProfileServiceTest {
         assertThat(response.studentProfile().studentNumber()).isEqualTo("UIT-001");
         assertThat(response.studentProfile().department()).isEqualTo("CS");
         assertThat(response.studentProfile().programme()).isEqualTo("Software Engineering");
-        assertThat(response.studentProfile().year()).isEqualTo((short) 3);
+        assertThat(response.studentProfile().year()).isEqualTo((short) 4);
         assertThat(response.studentProfile().academicGroup().groupId()).isEqualTo(5L);
         assertThat(response.studentProfile().academicGroup().groupType()).isEqualTo(AcademicGroupType.MAJOR);
         assertThat(response.studentProfile().academicGroup().department()).isEqualTo("CS");

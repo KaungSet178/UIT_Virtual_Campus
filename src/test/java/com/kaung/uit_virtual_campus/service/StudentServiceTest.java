@@ -60,7 +60,7 @@ class StudentServiceTest {
                 null
         ));
         majorSe = academicGroupRepository.save(new AcademicGroup(
-                (short) 3,
+                (short) 4,
                 AcademicGroupType.MAJOR,
                 null,
                 "CS",
@@ -93,7 +93,7 @@ class StudentServiceTest {
                 "UIT-TEST-002",
                 "CS",
                 "Software Engineering",
-                (short) 3,
+                (short) 4,
                 majorSe
         ));
 
@@ -173,7 +173,7 @@ class StudentServiceTest {
     @Test
     @DisplayName("listStudents filters by year")
     void listStudentsFiltersByYear() {
-        List<StudentListResponse> students = studentService.listStudents(null, (short) 3, null, null);
+        List<StudentListResponse> students = studentService.listStudents(null, (short) 4, null, null);
 
         assertThat(students)
                 .extracting(StudentListResponse::email)

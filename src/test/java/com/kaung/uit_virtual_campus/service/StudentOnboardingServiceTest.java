@@ -118,9 +118,9 @@ class StudentOnboardingServiceTest {
     }
 
     @Test
-    @DisplayName("Onboarding creates public user when auth trigger has not inserted it yet")
+    @DisplayName("Year 3 department onboarding creates public user without requiring a major")
     void createsMissingPublicUser() {
-        AcademicGroup major = new AcademicGroup(5L, (short) 3, AcademicGroupType.MAJOR, null, "CS", "SE");
+        AcademicGroup department = new AcademicGroup(5L, (short) 3, AcademicGroupType.DEPARTMENT, null, "CS", null);
         StudentOnboardingRequest request = new StudentOnboardingRequest("New Student", "UIT-002", 5L, null);
         when(currentUserService.getCurrentUserId()).thenReturn(userId);
         when(currentUserService.getCurrentUserEmail()).thenReturn(Optional.of("new.student@uit.example"));
@@ -128,8 +128,8 @@ class StudentOnboardingServiceTest {
         when(roleRepository.findByRoleNameIgnoreCase("STUDENT")).thenReturn(Optional.of(studentRole));
         when(studentProfileRepository.findWithUserByStudentId(userId)).thenReturn(Optional.empty());
         when(studentProfileRepository.findByStudentNumber("UIT-002")).thenReturn(Optional.empty());
-        when(academicGroupRepository.findById(5L)).thenReturn(Optional.of(major));
-        when(currentUserProfileService.getCurrentUserProfile()).thenReturn(response(major, "CS", "SE", (short) 3));
+        when(academicGroupRepository.findById(5L)).thenReturn(Optional.of(department));
+        when(currentUserProfileService.getCurrentUserProfile()).thenReturn(response(department, "CS", null, (short) 3));
 
         service.completeStudentOnboarding(request);
 
@@ -138,6 +138,33 @@ class StudentOnboardingServiceTest {
         assertThat(userCaptor.getValue().getUserId()).isEqualTo(userId);
         assertThat(userCaptor.getValue().getEmail()).isEqualTo("new.student@uit.example");
         assertThat(userCaptor.getValue().getRoles()).containsExactly(studentRole);
+        ArgumentCaptor<StudentProfile> profileCaptor = ArgumentCaptor.forClass(StudentProfile.class);
+        verify(studentProfileRepository).save(profileCaptor.capture());
+        assertThat(profileCaptor.getValue().getDepartment()).isEqualTo("CS");
+        assertThat(profileCaptor.getValue().getProgramme()).isNull();
+        assertThat(profileCaptor.getValue().getAcademicGroup()).isEqualTo(department);
+    }
+
+    @Test
+    @DisplayName("Year 3 CT department onboarding maps department and leaves programme unset")
+    void departmentGroupMapsDepartmentWithoutProgramme() {
+        AcademicGroup department = new AcademicGroup(6L, (short) 3, AcademicGroupType.DEPARTMENT, null, "CT", null);
+        StudentOnboardingRequest request = new StudentOnboardingRequest("Student User", "UIT-008", 6L, null);
+        when(currentUserService.getCurrentUserId()).thenReturn(userId);
+        when(userRepository.findWithRolesByUserId(userId)).thenReturn(Optional.of(user));
+        when(roleRepository.findByRoleNameIgnoreCase("STUDENT")).thenReturn(Optional.of(studentRole));
+        when(studentProfileRepository.findWithUserByStudentId(userId)).thenReturn(Optional.empty());
+        when(studentProfileRepository.findByStudentNumber("UIT-008")).thenReturn(Optional.empty());
+        when(academicGroupRepository.findById(6L)).thenReturn(Optional.of(department));
+        when(currentUserProfileService.getCurrentUserProfile()).thenReturn(response(department, "CT", null, (short) 3));
+
+        service.completeStudentOnboarding(request);
+
+        ArgumentCaptor<StudentProfile> profileCaptor = ArgumentCaptor.forClass(StudentProfile.class);
+        verify(studentProfileRepository).save(profileCaptor.capture());
+        assertThat(profileCaptor.getValue().getYear()).isEqualTo((short) 3);
+        assertThat(profileCaptor.getValue().getDepartment()).isEqualTo("CT");
+        assertThat(profileCaptor.getValue().getProgramme()).isNull();
     }
 
     @Test

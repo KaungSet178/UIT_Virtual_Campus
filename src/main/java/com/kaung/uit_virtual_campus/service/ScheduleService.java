@@ -83,7 +83,7 @@ public class ScheduleService {
                 && !studentProfile.getYear().equals(academicGroup.getYear())) {
             throw new ConflictException("Student profile year does not match assigned academic group year.");
         }
-        if (academicGroup.getGroupType() == AcademicGroupType.MAJOR
+        if (academicGroup.getGroupType() != AcademicGroupType.SECTION
                 && studentProfile.getDepartment() != null
                 && academicGroup.getDepartment() != null
                 && !studentProfile.getDepartment().equalsIgnoreCase(academicGroup.getDepartment())) {

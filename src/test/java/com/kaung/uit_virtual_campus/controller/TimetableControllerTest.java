@@ -179,11 +179,11 @@ class TimetableControllerTest {
     @WithMockUser
     @DisplayName("Authenticated user can list academic groups")
     void authenticatedUserCanListAcademicGroups() throws Exception {
-        when(academicGroupService.getAcademicGroups((short) 3, AcademicGroupType.MAJOR, "CS"))
+        when(academicGroupService.getAcademicGroups((short) 4, AcademicGroupType.MAJOR, "CS"))
                 .thenReturn(List.of(academicGroupResponse()));
 
         mockMvc.perform(get("/api/academic-groups")
-                        .param("year", "3")
+                        .param("year", "4")
                         .param("groupType", "MAJOR")
                         .param("department", "CS"))
                 .andExpect(status().isOk())
@@ -239,6 +239,6 @@ class TimetableControllerTest {
     }
 
     private AcademicGroupResponse academicGroupResponse() {
-        return new AcademicGroupResponse(2L, (short) 3, AcademicGroupType.MAJOR, null, "CS", "SE");
+        return new AcademicGroupResponse(2L, (short) 4, AcademicGroupType.MAJOR, null, "CS", "SE");
     }
 }

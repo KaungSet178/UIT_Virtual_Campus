@@ -21,7 +21,8 @@ public class AcademicGroupService {
     }
 
     public List<AcademicGroupResponse> getAcademicGroups(Short year, AcademicGroupType groupType, String department) {
-        return academicGroupRepository.findAllWithFilters(year, groupType, department).stream()
+        AcademicGroupType resolvedGroupType = groupType == null && year != null ? defaultGroupTypeForYear(year) : groupType;
+        return academicGroupRepository.findAllWithFilters(year, resolvedGroupType, department).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -41,5 +42,15 @@ public class AcademicGroupService {
                 academicGroup.getDepartment(),
                 academicGroup.getMajor()
         );
+    }
+
+    private AcademicGroupType defaultGroupTypeForYear(Short year) {
+        if (year <= 2) {
+            return AcademicGroupType.SECTION;
+        }
+        if (year == 3) {
+            return AcademicGroupType.DEPARTMENT;
+        }
+        return AcademicGroupType.MAJOR;
     }
 }

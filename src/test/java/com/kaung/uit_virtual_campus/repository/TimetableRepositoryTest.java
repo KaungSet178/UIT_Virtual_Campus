@@ -72,7 +72,7 @@ class TimetableRepositoryTest {
                 LocalDate.of(2026, 5, 29)
         ));
         academicGroup = entityManager.persist(new AcademicGroup(
-                (short) 3,
+                (short) 4,
                 AcademicGroupType.MAJOR,
                 null,
                 "CS",
@@ -155,7 +155,7 @@ class TimetableRepositoryTest {
     @DisplayName("Exact same slot with same subject and semester for another academic group is allowed")
     void exactSameSlotSameSubjectAndSemesterDifferentGroupAllowed() {
         AcademicGroup otherGroup = entityManager.persist(new AcademicGroup(
-                (short) 3,
+                (short) 4,
                 AcademicGroupType.MAJOR,
                 null,
                 "CS",
@@ -181,7 +181,7 @@ class TimetableRepositoryTest {
     @DisplayName("Exact same slot with different subject is rejected")
     void exactSameSlotDifferentSubjectRejected() {
         AcademicGroup otherGroup = entityManager.persist(new AcademicGroup(
-                (short) 3,
+                (short) 4,
                 AcademicGroupType.MAJOR,
                 null,
                 "CS",
@@ -208,7 +208,7 @@ class TimetableRepositoryTest {
     @DisplayName("Overlapping different time boundaries with same subject is rejected")
     void partialOverlapSameSubjectRejected() {
         AcademicGroup otherGroup = entityManager.persist(new AcademicGroup(
-                (short) 3,
+                (short) 4,
                 AcademicGroupType.MAJOR,
                 null,
                 "CS",
@@ -286,6 +286,50 @@ class TimetableRepositoryTest {
     }
 
     @Test
+    @DisplayName("Academic group maps Year 3 CS DEPARTMENT shape")
+    void academicGroupMapsYearThreeCsDepartmentShape() {
+        AcademicGroup departmentGroup = entityManager.persist(new AcademicGroup(
+                (short) 3,
+                AcademicGroupType.DEPARTMENT,
+                null,
+                "CS",
+                null
+        ));
+        entityManager.flush();
+        entityManager.clear();
+
+        AcademicGroup loaded = entityManager.find(AcademicGroup.class, departmentGroup.getGroupId());
+
+        assertThat(loaded.getGroupType()).isEqualTo(AcademicGroupType.DEPARTMENT);
+        assertThat(loaded.getYear()).isEqualTo((short) 3);
+        assertThat(loaded.getSectionName()).isNull();
+        assertThat(loaded.getDepartment()).isEqualTo("CS");
+        assertThat(loaded.getMajor()).isNull();
+    }
+
+    @Test
+    @DisplayName("Academic group maps Year 3 CT DEPARTMENT shape")
+    void academicGroupMapsYearThreeCtDepartmentShape() {
+        AcademicGroup departmentGroup = entityManager.persist(new AcademicGroup(
+                (short) 3,
+                AcademicGroupType.DEPARTMENT,
+                null,
+                "CT",
+                null
+        ));
+        entityManager.flush();
+        entityManager.clear();
+
+        AcademicGroup loaded = entityManager.find(AcademicGroup.class, departmentGroup.getGroupId());
+
+        assertThat(loaded.getGroupType()).isEqualTo(AcademicGroupType.DEPARTMENT);
+        assertThat(loaded.getYear()).isEqualTo((short) 3);
+        assertThat(loaded.getSectionName()).isNull();
+        assertThat(loaded.getDepartment()).isEqualTo("CT");
+        assertThat(loaded.getMajor()).isNull();
+    }
+
+    @Test
     @DisplayName("Academic group rejects invalid year")
     void academicGroupRejectsInvalidYear() {
         AcademicGroup invalid = new AcademicGroup((short) 0, AcademicGroupType.SECTION, "A", null, null);
@@ -322,7 +366,7 @@ class TimetableRepositoryTest {
     @DisplayName("Academic group enforces major uniqueness by year department and major")
     void academicGroupEnforcesMajorUniqueness() {
         assertThatThrownBy(() -> {
-            entityManager.persist(new AcademicGroup((short) 3, AcademicGroupType.MAJOR, null, "CS", "SE"));
+            entityManager.persist(new AcademicGroup((short) 4, AcademicGroupType.MAJOR, null, "CS", "SE"));
             entityManager.flush();
         }).isInstanceOf(ConstraintViolationException.class);
     }
@@ -378,7 +422,7 @@ class TimetableRepositoryTest {
     @Test
     @DisplayName("Personal timetable query filters by academic group and active semester")
     void personalTimetableFiltersByAcademicGroupAndSemester() {
-        AcademicGroup otherGroup = entityManager.persist(new AcademicGroup((short) 3, AcademicGroupType.MAJOR, null, "CS", "KE"));
+        AcademicGroup otherGroup = entityManager.persist(new AcademicGroup((short) 4, AcademicGroupType.MAJOR, null, "CS", "KE"));
         Semester otherSemester = entityManager.persist(new Semester(
                 "2026 Semester 2",
                 LocalDate.of(2026, 6, 15),
